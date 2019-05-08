@@ -10,27 +10,30 @@ var PingGame *Game
 
 const (
 	SINGLE = "SINGLE"
-	MULTI = "MULTI"
+	MULTI  = "MULTI"
 
-	WAIT = "SIGNAL_TO_WAIT_OPPONENT"
-	START = "SIGNAL_START_THE_GAME"
+	WAIT   = "SIGNAL_TO_WAIT_OPPONENT"
+	START  = "SIGNAL_START_THE_GAME"
 	FINISH = "SIGNAL_FINISH_GAME"
-	STATE = "SIGNAL_NEW_GAME_STATE"
+	STATE  = "SIGNAL_NEW_GAME_STATE"
 
-	NEWPLAYER = "newPlayer"
+	NEWPLAYER  = "newPlayer"
 	NEWCOMMAND = "newCommand"
 )
 
-func InitGame(maxRooms uint) *Game {
+var maxRooms uint
+
+func InitGame(rooms uint) *Game {
+	maxRooms = rooms
 	return NewGame(maxRooms)
 }
 
 type Game struct {
-	MaxRooms uint
+	MaxRooms    uint
 	roomsSingle []*RoomSingle
-	roomsMulti []*RoomMulti
+	roomsMulti  []*RoomMulti
 	//mu *sync.Mutex
-	mu sync.RWMutex
+	mu       sync.RWMutex
 	register chan *Player
 }
 
@@ -41,7 +44,7 @@ func NewGame(maxRooms uint) *Game {
 	}
 }
 
-func (g *Game) Run()  {
+func (g *Game) Run() {
 LOOP:
 	for {
 		player, _ := <-g.register
@@ -79,7 +82,7 @@ LOOP:
 					g.mu.Lock()
 					room.AddPlayer(player)
 					//player.out <- &OutcomeMessage{Type:START}
-					room.broadcast <- &OutcomeMessage{Type:START}
+					room.broadcast <- &OutcomeMessage{Type: START}
 					room.SelectPlayersRoles()
 					fmt.Println("PLAYERS")
 					fmt.Println(room.Players)
@@ -98,7 +101,7 @@ LOOP:
 
 			g.mu.Lock()
 			room.AddPlayer(player)
-			player.out <- &OutcomeMessage{Type:WAIT}
+			player.out <- &OutcomeMessage{Type: WAIT}
 			g.mu.Unlock()
 		default:
 			fmt.Println("Empty")
@@ -114,11 +117,10 @@ func (g *Game) AddToRoomMulti(room *RoomMulti) {
 	g.roomsMulti = append(g.roomsMulti, room)
 }
 
-func (g *Game) AddPlayer(player *Player)  {
+func (g *Game) AddPlayer(player *Player) {
 	LogMsg("Player " + player.ID + " queued to add")
 	g.register <- player
 }
-
 
 func (g *Game) RoomsCount() int {
 	g.mu.RLock()
