@@ -2,17 +2,35 @@ package main
 
 import (
 	"game/metrics"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net/http"
 	"os"
-	"github.com/gorilla/mux"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
+	"github.com/spf13/viper"
 )
 
+func setConfig() (string, int) {
+	viper.AddConfigPath("./configs")
+	viper.SetConfigName("game")
+	var port string
+	var maxRooms int
+	if err := viper.ReadInConfig(); err != nil {
+		port = ":8083"
+		maxRooms = 10
+	} else {
+		port = ":" + viper.GetString("port")
+		maxRooms = viper.GetInt("maxRooms")
+	}
+	return port, maxRooms
+}
+
 func main() {
-	//to local package in local parametr (will be tested)
-	PingGame = InitGame(10)
+	port, maxRooms := setConfig()
+	PingGame = InitGame(uint(maxRooms))
 	go PingGame.Run()
 
 	router := mux.NewRouter()
@@ -28,8 +46,7 @@ func main() {
 	gameRouter.HandleFunc("/single", StartSingle)
 	gameRouter.HandleFunc("/multi", StartMulti)
 
-	LogMsg("GameServer started at :8085")
+	LogMsg("GameServer started at", port)
 
-	http.ListenAndServe(":8085", handlers.LoggingHandler(os.Stdout, router))
+	http.ListenAndServe(port, handlers.LoggingHandler(os.Stdout, router))
 }
-

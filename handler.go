@@ -12,7 +12,6 @@ import (
 	"google.golang.org/grpc"
 )
 
-
 func StartSingle(w http.ResponseWriter, r *http.Request) {
 	if PingGame.RoomsCount() >= 10 {
 		//TODO check response on the client side
