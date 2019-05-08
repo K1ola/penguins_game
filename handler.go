@@ -22,10 +22,10 @@ func StartSingle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var user *models.User
+	user := new(models.User)
 	cookie, err := r.Cookie("sessionid")
 	if err != nil || cookie.Value == "" {
-		cookie.Value = "Anonumys"
+		user.Login = "Anonumys"
 	} else {
 		grcpConn, err := grpc.Dial(
 			"127.0.0.1:8083",
@@ -59,7 +59,7 @@ func StartSingle(w http.ResponseWriter, r *http.Request) {
 
 	//TODO remove hardcore, get from front player value
 	player := NewPlayer(conn)
-	player.ID = cookie.Value
+	player.ID = user.Login
 	go player.Listen()
 }
 
