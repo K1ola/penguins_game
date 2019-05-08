@@ -1,0 +1,12 @@
+
+.idea/
+go.sum
+
+.DS_Store
+.idea/
+configs/
+static/
+.vscode/
+coverage.out
+c.out
+
