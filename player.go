@@ -3,6 +3,7 @@ package main
 import (
 	//"game/helpers"
 	"fmt"
+	"game/metrics"
 	"github.com/gorilla/websocket"
 	"log"
 )
@@ -40,6 +41,7 @@ func (p *Player) Listen() {
 			if websocket.IsUnexpectedCloseError(err) {
 				p.RemovePlayerFromRoom()
 				LogMsg("Player " + p.ID +" disconnected")
+				metrics.PlayersCountInGame.Dec()
 				return
 			}
 			if err != nil {

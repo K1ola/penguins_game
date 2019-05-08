@@ -1,8 +1,12 @@
 package main
 
 import (
+	"game/metrics"
 	"net/http"
 	"os"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -37,7 +41,10 @@ func main() {
 	//router.Use(mw.AuthMiddleware)
 
 	//router.HandleFunc("/", RootHandler)
-	gameRouter.HandleFunc("/ws", StartWS)
+	prometheus.MustRegister(metrics.PlayersCountInGame, metrics.ActiveRooms)
+	router.Handle("/metrics", promhttp.Handler())
+	gameRouter.HandleFunc("/single", StartSingle)
+	gameRouter.HandleFunc("/multi", StartMulti)
 
 	LogMsg("GameServer started at", port)
 
