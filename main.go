@@ -11,7 +11,7 @@ import (
 
 func setConfig() (string, int) {
 	viper.AddConfigPath("./configs")
-	viper.SetConfigName("auth")
+	viper.SetConfigName("game")
 	var port string
 	var maxRooms int
 	if err := viper.ReadInConfig(); err != nil {
@@ -25,7 +25,6 @@ func setConfig() (string, int) {
 }
 
 func main() {
-	//to local package in local parametr (will be tested)
 	port, maxRooms := setConfig()
 	PingGame = InitGame(uint(maxRooms))
 	go PingGame.Run()
