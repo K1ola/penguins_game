@@ -23,10 +23,10 @@ func main() {
 	//router.Use(mw.AuthMiddleware)
 
 	//router.HandleFunc("/", RootHandler)
-	gameRouter.HandleFunc("/ws", StartWS)
 	prometheus.MustRegister(metrics.PlayersCountInGame, metrics.ActiveRooms)
 	router.Handle("/metrics", promhttp.Handler())
-
+	gameRouter.HandleFunc("/single", StartSingle)
+	gameRouter.HandleFunc("/multi", StartMulti)
 
 	LogMsg("GameServer started at :8085")
 
