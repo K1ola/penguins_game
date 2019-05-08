@@ -3,13 +3,31 @@ package main
 import (
 	"net/http"
 	"os"
-	"github.com/gorilla/mux"
+
 	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
+	"github.com/spf13/viper"
 )
+
+func setConfig() (string, int) {
+	viper.AddConfigPath("./configs")
+	viper.SetConfigName("auth")
+	var port string
+	var maxRooms int
+	if err := viper.ReadInConfig(); err != nil {
+		port = ":8083"
+		maxRooms = 10
+	} else {
+		port = ":" + viper.GetString("port")
+		maxRooms = viper.GetInt("maxRooms")
+	}
+	return port, maxRooms
+}
 
 func main() {
 	//to local package in local parametr (will be tested)
-	PingGame = InitGame(10)
+	port, maxRooms := setConfig()
+	PingGame = InitGame(uint(maxRooms))
 	go PingGame.Run()
 
 	router := mux.NewRouter()
@@ -22,9 +40,7 @@ func main() {
 	//router.HandleFunc("/", RootHandler)
 	gameRouter.HandleFunc("/ws", StartWS)
 
+	LogMsg("GameServer started at", port)
 
-	LogMsg("GameServer started at :8085")
-
-	http.ListenAndServe(":8085", handlers.LoggingHandler(os.Stdout, router))
+	http.ListenAndServe(port, handlers.LoggingHandler(os.Stdout, router))
 }
-
