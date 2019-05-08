@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+// If you've changed THIS file, run this:
+// protoc --go_out=plugins=grpc:. *.proto
+
+// then this:
+// ls *.pb.go | xargs -n1 -IX bash -c "sed -e '/uint64/ s/,omitempty//' X > X.tmp && mv X{.tmp,}"
+
+package models;
+
+message User {
+    uint64 ID = 1;
+    string login = 2;
+    string email = 3;
+    string password = 4;
+    string hashPassword = 5;
+    uint64 score = 6;
+    string picture = 7;
+    uint64 count = 8;
+}
+
+message UsersArray {
+    repeated User users = 1;
+}
+
+message JWT {
+    string token = 1;
+}
+
+message LeadersInfo {
+    uint64 ID = 1;
+    uint64 Count = 2;
+    uint64 UsersOnPage = 3;
+}
+
+message Nothing {}
+
+service AuthChecker {
+    rpc LoginUser (User) returns (JWT) {}
+    rpc RegisterUser (User) returns (JWT) {}
+    //GetUser() also checks JWT. If token if invalid, nil will be returned.
+    rpc GetUser (JWT) returns (User) {}
+    rpc GetUserArray (LeadersInfo) returns (UsersArray) {}
+    rpc GetUserCountInfo (Nothing) returns (LeadersInfo) {}
+    rpc ChangeUser (User) returns (Nothing) {}
+    rpc DeleteUser (JWT) returns (Nothing) {}
+}
