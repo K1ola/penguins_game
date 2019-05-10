@@ -54,6 +54,29 @@ func (r *RoomMulti) Run() {
 			r.mu.Unlock()
 			LogMsg("Player " + player.ID + " joined")
 			//r.broadcast <- &OutcomeMessage{Type:START}
+			if len(r.Players) == 2 {
+				penguin, gun := r.SelectPlayersRoles()
+
+				message := &OutcomeMessage{
+					Type: START,
+					Payload: OutPayloadMessage{
+						Gun: GunMessage{
+							Name: gun,
+						},
+						Penguin: PenguinMessage{
+							Name: penguin,
+						},
+						PiscesCount: 24,
+					},
+				}
+				for _, player := range r.Players {
+					select {
+					case player.out <- message:
+					default:
+						close(player.out)
+					}
+				}
+			}
 		case message := <- r.broadcast:
 			fmt.Println("IN BROADCAST")
 			for _, player := range r.Players {
@@ -95,16 +118,20 @@ func (r *RoomMulti) RemovePlayer(player *Player) {
 	r.unregister <- player
 }
 
-func (r *RoomMulti) SelectPlayersRoles() {
-	//TODO make it random
+func (r *RoomMulti) SelectPlayersRoles() (string, string) {
+	var penguin, gun string
+
 	digit := rand.Intn(2)
 	for _, player := range r.Players {
 		if digit == 0 {
 			player.Type = PENGUIN
+			penguin = player.ID
 			digit = 1
 		} else {
 			player.Type = GUN
+			gun = player.ID
 			digit = 0
 		}
 	}
+	return penguin, gun
 }

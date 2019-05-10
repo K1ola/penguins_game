@@ -127,34 +127,12 @@ LOOP:
 					}
 				case MULTI:
 					//start roomMulty
-					var penguin, gun string
-
 					for _, room := range g.roomsMulti {
 						if len(room.Players) < int(room.MaxPlayers) {
 							g.mu.Lock()
 							room.AddPlayer(player)
 							g.mu.Unlock()
 
-							room.SelectPlayersRoles()
-							for _, player := range room.Players {
-								if player.Type == PENGUIN {
-									penguin = player.ID
-								} else {
-									gun = player.ID
-								}
-							}
-							room.broadcast <- &OutcomeMessage{
-								Type: START,
-								Payload:OutPayloadMessage{
-									Gun:GunMessage{
-										Name: gun,
-									},
-									Penguin:PenguinMessage{
-										Name: penguin,
-									},
-									PiscesCount: 24,
-								},
-							}
 							continue LOOP
 						}
 					}
