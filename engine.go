@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"math/rand"
 )
 
@@ -188,18 +187,19 @@ func RunMulti(room *RoomMulti) *OutcomeMessage {
 	msg := room.state.RecalcPenguin()
 	if msg != nil {
 		for _, player := range room.Players {
-			room.finish <- player
+			//TODO
+			room.FinishGame(player)
 		}
 		return msg
 	}
 	msg = room.state.RecalcBullet()
 	if msg != nil {
 		for _, player := range room.Players {
-			room.finish <- player
+			//room.FinishGame(player)
+			player.Finish()
 		}
 		return msg
 	}
-	fmt.Println(room.state.GetState())
 	return room.state.GetState()
 }
 

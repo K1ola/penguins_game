@@ -30,7 +30,7 @@ func NewRoomMulti(MaxPlayers uint) *RoomMulti {
 		Players:    make(map[string]*Player),
 		register:   make(chan *Player),
 		unregister: make(chan *Player),
-		ticker:     time.NewTicker(2 * time.Second),
+		ticker:     time.NewTicker(100 * time.Millisecond),
 		state: &RoomState{
 			Penguin: new(PenguinState),
 			Gun: new(GunState),
@@ -151,4 +151,12 @@ func (r *RoomMulti) SelectPlayersRoles() (string, string) {
 		}
 	}
 	return penguin, gun
+}
+
+func (r *RoomMulti) FinishGame(player *Player) {
+	//r.finish <- player
+	LogMsg("Player " + player.ID + " finished game")
+				//player.out <- &OutcomeMessage{Type:FINISH}
+				r.state.Penguin = nil
+				r.state.Gun = nil
 }

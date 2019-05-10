@@ -103,6 +103,16 @@ func (p *Player) RemovePlayerFromRoom() {
 	}
 }
 
+func (p *Player) Finish() {
+	if p.roomSingle != nil {
+		//TODO
+		//p.roomSingle.(p)
+	}
+	if p.roomMulti != nil {
+		p.roomMulti.FinishGame(p)
+	}
+}
+
 //func (p *Player) SendState(state *RoomState) {
 //	//TODO: send to front
 //	if state != nil {
