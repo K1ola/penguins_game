@@ -1,15 +1,12 @@
 package main
 
 import (
-	//"context"
-	"game/helpers"
 	"game/models"
 	"net/http"
 
 	"github.com/gorilla/websocket"
 
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
 )
 
 func StartSingle(w http.ResponseWriter, r *http.Request) {
@@ -26,21 +23,9 @@ func StartSingle(w http.ResponseWriter, r *http.Request) {
 	if err != nil || cookie.Value == "" {
 		user.Login = "Anonumys"
 	} else {
-		grcpConn, err := grpc.Dial(
-			"127.0.0.1:8083",
-			grpc.WithInsecure(),
-		)
-		if err != nil {
-			helpers.LogMsg("Can`t connect to grpc")
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		defer grcpConn.Close()
-
-		authManager := models.NewAuthCheckerClient(grcpConn)
 		ctx := context.Background()
 
-		user, _ = authManager.GetUser(ctx, &models.JWT{Token: cookie.Value})
+		user, _ = models.AuthManager.GetUser(ctx, &models.JWT{Token: cookie.Value})
 		cookie.Value = user.Login
 	}
 
@@ -78,21 +63,21 @@ func StartMulti(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	} else {
-		grcpConn, err := grpc.Dial(
-			"127.0.0.1:8083",
-			grpc.WithInsecure(),
-		)
-		if err != nil {
-			helpers.LogMsg("Can`t connect to grpc")
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		defer grcpConn.Close()
-
-		authManager := models.NewAuthCheckerClient(grcpConn)
+		//grcpConn, err := grpc.Dial(
+		//	"127.0.0.1:8083",
+		//	grpc.WithInsecure(),
+		//)
+		//if err != nil {
+		//	helpers.LogMsg("Can`t connect to grpc")
+		//	w.WriteHeader(http.StatusInternalServerError)
+		//	return
+		//}
+		//defer grcpConn.Close()
+		//
+		//authManager := models.NewAuthCheckerClient(grcpConn)
 		ctx := context.Background()
 
-		user, err = authManager.GetUser(ctx, &models.JWT{Token: cookie.Value})
+		user, err = models.AuthManager.GetUser(ctx, &models.JWT{Token: cookie.Value})
 		if err != nil {
 			LogMsg("Invalid Cookie in Multi")
 			w.WriteHeader(http.StatusUnauthorized)

@@ -1,7 +1,10 @@
 package main
 
 import (
+	"game/helpers"
 	"game/metrics"
+	"game/models"
+	"google.golang.org/grpc"
 	"net/http"
 	"os"
 
@@ -13,25 +16,39 @@ import (
 	"github.com/spf13/viper"
 )
 
-func setConfig() (string, int) {
+func setConfig() (string, int, string) {
 	viper.AddConfigPath("./configs")
 	viper.SetConfigName("game")
-	var port string
+	var port, authAddress string
 	var maxRooms int
 	if err := viper.ReadInConfig(); err != nil {
-		port = ":8083"
+		port = ":8085"
 		maxRooms = 10
+		authAddress = "127.0.0.1:8083"
 	} else {
 		port = ":" + viper.GetString("port")
 		maxRooms = viper.GetInt("maxRooms")
+		authAddress = viper.GetString("auth")
 	}
-	return port, maxRooms
+	return port, maxRooms, authAddress
 }
 
 func main() {
-	port, maxRooms := setConfig()
+	port, maxRooms, authAddress := setConfig()
 	PingGame = InitGame(uint(maxRooms))
 	go PingGame.Run()
+
+	grcpConn, err := grpc.Dial(
+		authAddress,
+		grpc.WithInsecure(),
+	)
+	if err != nil {
+		helpers.LogMsg("Can`t connect to grpc")
+		return
+	}
+	defer grcpConn.Close()
+
+	models.AuthManager = models.NewAuthCheckerClient(grcpConn)
 
 	router := mux.NewRouter()
 	gameRouter := router.PathPrefix("/game").Subrouter()

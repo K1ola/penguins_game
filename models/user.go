@@ -11,6 +11,8 @@ package models
 //	Games        uint   `json:"count"`
 //}
 
+var AuthManager AuthCheckerClient
+
 type Session struct {
 	Email     string `json:"email"`
 	SessionID string `json:"sessionid"`
