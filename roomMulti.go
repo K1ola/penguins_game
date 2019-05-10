@@ -80,7 +80,8 @@ func (r *RoomMulti) Run() {
 						close(player.out)
 					}
 				}
-				RunMulti(r)
+				r.state = CreateInitialState(r)
+
 			}
 		case message := <- r.broadcast:
 			fmt.Println("IN BROADCAST")
@@ -91,11 +92,12 @@ func (r *RoomMulti) Run() {
 					close(player.out)
 				}
 			}
-			//HandleCommand(r, message)
 		case <-r.ticker.C:
 			if r.gameState == START {
-				message := &OutcomeMessage{Type:STATE}
-
+				  message := RunMulti(r)
+				  if message.Type != STATE {
+				  	r.gameState = FINISH
+				  }
 				for _, player := range r.Players {
 					select {
 					case player.out <- message:
@@ -107,7 +109,7 @@ func (r *RoomMulti) Run() {
 			}
 		case player := <- r.finish:
 			LogMsg("Player " + player.ID + " finished game")
-			player.out <- &OutcomeMessage{Type:FINISH}
+			//player.out <- &OutcomeMessage{Type:FINISH}
 			r.state.Penguin = nil
 			r.state.Gun = nil
 			//FinishGame(r)

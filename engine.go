@@ -5,6 +5,42 @@ import (
 	"math/rand"
 )
 
+func CreatePenguin(id string) *PenguinState {
+	return &PenguinState{
+		ID: id,
+		Result: "",
+		Alpha: rand.Intn(360),
+		Score: 0,
+		ClockwiseDirection: true,
+	}
+}
+
+func CreateGun(id string) *GunState {
+	return &GunState{
+		ID: id,
+		Result: "",
+		Alpha: rand.Intn(360),
+		Score: 0,
+		ClockwiseDirection: true,
+		Bullet: CreateBullet(),
+	}
+}
+
+func CreateBullet() *BulletState {
+	return &BulletState{
+		Alpha: rand.Intn(360),
+		DistanceFromCenter: 0,
+	}
+}
+
+func CreateFishes() map[int]*FishState {
+	fishes := make(map[int]*FishState, 24)
+	for i := 0; i < 24; i++ {
+		fishes[i] = &FishState{Eaten: false, Alpha: 360/24*i}
+	}
+	return fishes
+}
+
 //
 //const ownRandom = 0.25
 //
@@ -148,9 +184,23 @@ import (
 //		}
 //}
 
-func RunMulti(room *RoomMulti) {
-	state := CreateInitialState(room)
-	fmt.Println(state)
+func RunMulti(room *RoomMulti) *OutcomeMessage {
+	msg := room.state.RecalcPenguin()
+	if msg != nil {
+		for _, player := range room.Players {
+			room.finish <- player
+		}
+		return msg
+	}
+	msg = room.state.RecalcBullet()
+	if msg != nil {
+		for _, player := range room.Players {
+			room.finish <- player
+		}
+		return msg
+	}
+	fmt.Println(room.state.GetState())
+	return room.state.GetState()
 }
 
 func CreateInitialState(room *RoomMulti) *RoomState {
@@ -169,38 +219,108 @@ func CreateInitialState(room *RoomMulti) *RoomState {
 	return state
 }
 
-func CreatePenguin(id string) *PenguinState {
-	return &PenguinState{
-		ID: id,
-		Result: "",
-		Alpha: rand.Intn(360),
-		Score: 0,
-		ClockwiseDirection: true,
+
+func (rs *RoomState) RecalcBullet() *OutcomeMessage{
+	if rs.Gun.Bullet.DistanceFromCenter > 100*0.8/2 {
+		if rs.Gun.Bullet.Alpha % 360 >= rs.Penguin.Alpha - 7 && rs.Gun.Bullet.Alpha % 360 <= rs.Penguin.Alpha + 7 {
+			//lost
+			return &OutcomeMessage{
+				Type:FINISH,
+				Payload:OutPayloadMessage{
+					Penguin:PenguinMessage{
+						Score: uint(rs.Penguin.Score),
+						Result:LOST,
+					},
+					Gun:GunMessage{
+						Score: uint(rs.Gun.Score),
+						Result:WIN,
+					},
+				}}
+		}
+		if rs.Penguin.ClockwiseDirection {
+			rs.Gun.Bullet.Alpha = rs.Penguin.Alpha + rand.Intn(101)
+		} else {
+			rs.Gun.Bullet.Alpha = rs.Penguin.Alpha - rand.Intn(101)
+		}
+		rs.Gun.Bullet.DistanceFromCenter = 0
+
+	}
+	rs.Gun.Bullet.DistanceFromCenter += 5
+	return nil
+}
+
+func (rs *RoomState) RecalcPenguin() *OutcomeMessage{
+		if rs.Penguin.Alpha == 360 {
+			rs.Penguin.Alpha = 0
+		}
+
+		if rs.Penguin.Alpha == -1 {
+			rs.Penguin.Alpha = 359
+		}
+
+		for i := 0; i < len(rs.Fishes); i++ {
+			if rs.Penguin.Alpha == rs.Fishes[i].Alpha {
+				rs.Penguin.Score ++
+
+				rs.Fishes[i].Eaten = true
+				break
+			}
+		}
+
+		count := 0
+		for i := 0; i <  len(rs.Fishes); i++ {
+			if rs.Fishes[i].Eaten == false {
+				count ++
+			}
+		}
+
+		if count == 0 {
+			// win penguin
+			return &OutcomeMessage{
+				Type:FINISH,
+				Payload:OutPayloadMessage{
+					Penguin:PenguinMessage{
+						Score: uint(rs.Penguin.Score),
+						Result:WIN,
+					},
+					Gun:GunMessage{
+						Score: uint(rs.Gun.Score),
+						Result:LOST,
+					},
+				}}
+		}
+
+		if rs.Penguin.ClockwiseDirection {
+			rs.Penguin.Alpha ++
+		} else {
+			rs.Penguin.Alpha --
+		}
+	return nil
+}
+
+func (rs *RoomState) GetState() *OutcomeMessage {
+	return &OutcomeMessage{
+		Type:STATE,
+		Payload:OutPayloadMessage{
+			Penguin:PenguinMessage{
+				Alpha: rs.Penguin.Alpha,
+				Score: uint(rs.Penguin.Score),
+				Result: rs.Penguin.Result,
+				Name: rs.Penguin.ID,
+				Clockwise: rs.Penguin.ClockwiseDirection,
+			},
+			Gun:GunMessage{
+				Name: rs.Gun.ID,
+				Result: rs.Gun.Result,
+				Score: uint(rs.Gun.Score),
+				Alpha: rs.Gun.Alpha,
+				Bullet: BulletMessage{
+					Alpha: rs.Gun.Bullet.Alpha,
+					DistanceFromCenter: rs.Gun.Bullet.DistanceFromCenter,
+				},
+			},
+			PiscesCount: 24,
+		},
 	}
 }
 
-func CreateGun(id string) *GunState {
-	return &GunState{
-		ID: id,
-		Result: "",
-		Alpha: rand.Intn(360),
-		Score: 0,
-		ClockwiseDirection: true,
-		Bullet: CreateBullet(),
-	}
-}
-
-func CreateBullet() *BulletState {
-	return &BulletState{
-		Alpha: rand.Intn(360),
-		DistanceFromCenter: 0,
-	}
-}
-
-func CreateFishes() map[int]*FishState {
-	fishes := make(map[int]*FishState, 24)
-	for i := 0; i < 24; i++ {
-		fishes[i] = &FishState{Eaten: false, Alpha: 360/24*i}
-	}
-	return fishes
-}

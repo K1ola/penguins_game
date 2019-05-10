@@ -23,6 +23,9 @@ const (
 
 	PENGUIN = "PENGUIN"
 	GUN = "GUN"
+
+	WIN = "WIN"
+	LOST = "LOST"
 )
 
 var maxRooms uint
