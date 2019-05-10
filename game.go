@@ -133,7 +133,8 @@ LOOP:
 						if len(room.Players) < int(room.MaxPlayers) {
 							g.mu.Lock()
 							room.AddPlayer(player)
-							///////////////////
+							g.mu.Unlock()
+
 							room.SelectPlayersRoles()
 							for _, player := range room.Players {
 								if player.Type == PENGUIN {
@@ -142,28 +143,18 @@ LOOP:
 									gun = player.ID
 								}
 							}
-							//player.out <- &OutcomeMessage{Type:START}
 							room.broadcast <- &OutcomeMessage{
 								Type: START,
 								Payload:OutPayloadMessage{
 									Gun:GunMessage{
-										Bullet:BulletMessage{
-											Alpha: 0,
-											DistanceFromCenter: 0,
-										},
-										Alpha: 0,
 										Name: gun,
-										Result: "",
 									},
 									Penguin:PenguinMessage{
-										Clockwise:false,
-										Alpha: 0,
 										Name: penguin,
-										Result: "",
 									},
+									PiscesCount: 24,
 								},
 							}
-							g.mu.Unlock()
 							continue LOOP
 						}
 					}
