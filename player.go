@@ -19,15 +19,15 @@ type Player struct {
 	Type string
 }
 
-func NewPlayer(conn *websocket.Conn) *Player {
+func NewPlayer(conn *websocket.Conn, id string) *Player {
 	return &Player{
 		conn: conn,
-		//ID:   id,
+		ID:   id,
 		in:   make(chan *IncomeMessage),
 		out:  make(chan *OutcomeMessage, 1),
 		roomMulti: nil,
 		roomSingle: nil,
-		Type: "penguin",
+		Type: PENGUIN,
 	}
 }
 
@@ -64,11 +64,18 @@ func (p *Player) Listen() {
 					//стартовая инициализация, производится строго вначале один раз
 					if message.Payload.Mode != "" {
 						p.GameMode = message.Payload.Mode
-						p.ID = message.Payload.Name
+						//p.ID = message.Payload.Name
 						PingGame.AddPlayer(p)
 					}
 				case NEWCOMMAND:
-						//process command
+					switch message.Payload.Command {
+					case ROTATE:
+						//do rotate
+					case SHOT:
+						//do shot
+					default:
+						fmt.Println("Invalid command")
+					}
 				default:
 					fmt.Println("Default in Player.Listen() - in")
 			}
@@ -76,14 +83,18 @@ func (p *Player) Listen() {
 		case message := <-p.out:
 			fmt.Printf("Back says: %#v", message)
 			//шлем всем фронтам текущее состояние
-			//switch message.Type {
-			//	case START:
-			//	case WAIT:
-			//	case FINISH:
-			//	case STATE:
-			//	default:
-			//		fmt.Println("Default in Player.Listen() - out")
-			//}
+			switch message.Type {
+				case START:
+					fmt.Println("Process START")
+				case WAIT:
+					fmt.Println("Process WAIT")
+				case FINISH:
+					fmt.Println("Process FINISH")
+				case STATE:
+					fmt.Println("Process STATE")
+				default:
+					fmt.Println("Default in Player.Listen() - out")
+			}
 			_ = p.conn.WriteJSON(message)
 			//if p.GameMode != "" {
 			//	if p.roomSingle != nil {

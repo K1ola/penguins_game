@@ -42,7 +42,7 @@ func StartSingle(w http.ResponseWriter, r *http.Request) {
 	LogMsg("Connected to client")
 
 	//TODO remove hardcore, get from front player value
-	player := NewPlayer(conn)
+	player := NewPlayer(conn, user.Login)
 	player.ID = user.Login
 	go player.Listen()
 }
@@ -63,18 +63,6 @@ func StartMulti(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	} else {
-		//grcpConn, err := grpc.Dial(
-		//	"127.0.0.1:8083",
-		//	grpc.WithInsecure(),
-		//)
-		//if err != nil {
-		//	helpers.LogMsg("Can`t connect to grpc")
-		//	w.WriteHeader(http.StatusInternalServerError)
-		//	return
-		//}
-		//defer grcpConn.Close()
-		//
-		//authManager := models.NewAuthCheckerClient(grcpConn)
 		ctx := context.Background()
 
 		user, err = models.AuthManager.GetUser(ctx, &models.JWT{Token: cookie.Value})
@@ -88,13 +76,6 @@ func StartMulti(w http.ResponseWriter, r *http.Request) {
 
 	upgrader := &websocket.Upgrader{}
 
-	//check for multi in micro!!!!!
-
-	//cookie, err := r.Cookie("sessionid")
-	//if err != nil {
-	//	cookie.Value = "Anonumys"
-	//}
-
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -105,7 +86,6 @@ func StartMulti(w http.ResponseWriter, r *http.Request) {
 
 	LogMsg("Connected to client")
 
-	//TODO remove hardcore, get from front player value
-	player := NewPlayer(conn)
+	player := NewPlayer(conn, user.Login)
 	go player.Listen()
 }

@@ -28,7 +28,7 @@ func NewRoomMulti(MaxPlayers uint) *RoomMulti {
 		Players:    make(map[string]*Player),
 		register:   make(chan *Player),
 		unregister: make(chan *Player),
-		ticker:     time.NewTicker(100 * time.Millisecond),
+		ticker:     time.NewTicker(2 * time.Second),
 		state: &RoomState{
 			Penguin: new(PenguinState),
 			Gun: new(GunState),
@@ -65,6 +65,7 @@ func (r *RoomMulti) Run() {
 			}
 			//HandleCommand(r, message)
 		case <-r.ticker.C:
+			//r.broadcast <- &OutcomeMessage{Type:STATE}
 			//ProcessGameMulti(r)
 		case player := <- r.finish:
 			LogMsg("Player " + player.ID + " finished game")
@@ -96,14 +97,14 @@ func (r *RoomMulti) RemovePlayer(player *Player) {
 
 func (r *RoomMulti) SelectPlayersRoles() {
 	//TODO make it random
+	digit := rand.Intn(2)
 	for _, player := range r.Players {
-		digit := rand.Intn(1)
 		if digit == 0 {
-			player.Type = "penguin"
-		}
-
-		if digit != 0 {
-			player.Type = "gun"
+			player.Type = PENGUIN
+			digit = 1
+		} else {
+			player.Type = GUN
+			digit = 0
 		}
 	}
 }

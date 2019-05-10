@@ -20,6 +20,12 @@ const (
 
 	NEWPLAYER  = "newPlayer"
 	NEWCOMMAND = "newCommand"
+
+	ROTATE = "ROTATE"
+	SHOT = "SHOT"
+
+	PENGUIN = "PENGUIN"
+	GUN = "GUN"
 )
 
 var maxRooms uint
@@ -36,77 +42,137 @@ type Game struct {
 	//mu *sync.Mutex
 	mu       sync.RWMutex
 	register chan *Player
+	unregister chan *Player
 }
 
 func NewGame(maxRooms uint) *Game {
 	return &Game{
 		MaxRooms: maxRooms,
 		register: make(chan *Player),
+		unregister: make(chan *Player),
 	}
 }
 
 func (g *Game) Run() {
 LOOP:
 	for {
-		player, _ := <-g.register
-		//fmt.Println("register ch is ", ok)
-		//fmt.Println("State is "+ player.GameMode)
+		select {
+		case player, _ := <-g.register:
+			//fmt.Println("register ch is ", ok)
+			//fmt.Println("State is "+ player.GameMode)
 
-		switch player.GameMode {
-		case SINGLE:
-			//start roomSingle
-			for _, room := range g.roomsSingle {
-				if room.Player == nil {
+			switch player.GameMode {
+				case SINGLE:
+					//start roomSingle
+					for _, room := range g.roomsSingle {
+						if room.Player == nil {
+							g.mu.Lock()
+							room.AddPlayer(player)
+							g.mu.Unlock()
+							room.broadcast <- &OutcomeMessage{
+								Type: START,
+								Payload:OutPayloadMessage{
+									Gun:GunMessage{
+										Bullet:BulletMessage{
+											Alpha: 0,
+											DistanceFromCenter: 0,
+										},
+										Alpha: 0,
+										Name: GUN,
+										Result: "",
+									},
+									Penguin:PenguinMessage{
+										Clockwise:false,
+										Alpha: 0,
+										Name: player.ID,
+										Result: "",
+									},
+								},
+							}
+							continue LOOP
+						}
+					}
+
+					//если все комнаты заняты - делой новую
+					room := NewRoomSingle(1)
+					g.mu.Lock()
+					g.AddToRoomSingle(room)
+					g.mu.Unlock()
+
+					go room.Run()
+
 					g.mu.Lock()
 					room.AddPlayer(player)
 					g.mu.Unlock()
-					continue LOOP
-				}
-			}
-
-			//если все комнаты заняты - делой новую
-			room := NewRoomSingle(1)
-			g.mu.Lock()
-			g.AddToRoomSingle(room)
-			g.mu.Unlock()
-
-			go room.Run()
-
-			g.mu.Lock()
-			room.AddPlayer(player)
-			g.mu.Unlock()
-
-		case MULTI:
-			//start roomMulty
-			for _, room := range g.roomsMulti {
-				if len(room.Players) < int(room.MaxPlayers) {
-					g.mu.Lock()
-					room.AddPlayer(player)
-					//player.out <- &OutcomeMessage{Type:START}
 					room.broadcast <- &OutcomeMessage{Type: START}
-					room.SelectPlayersRoles()
-					fmt.Println("PLAYERS")
-					fmt.Println(room.Players)
+
+				case MULTI:
+					//start roomMulty
+					var penguin, gun string
+
+					//select random roles to players in each room
+					//for _, room := range g.roomsMulti {
+					//
+					//}
+
+					for _, room := range g.roomsMulti {
+						if len(room.Players) < int(room.MaxPlayers) {
+							g.mu.Lock()
+							room.AddPlayer(player)
+							///////////////////
+							room.SelectPlayersRoles()
+							for _, player := range room.Players {
+								if player.Type == PENGUIN {
+									penguin = player.ID
+								} else {
+									gun = player.ID
+								}
+							}
+							//player.out <- &OutcomeMessage{Type:START}
+							room.broadcast <- &OutcomeMessage{
+								Type: START,
+								Payload:OutPayloadMessage{
+									Gun:GunMessage{
+										Bullet:BulletMessage{
+											Alpha: 0,
+											DistanceFromCenter: 0,
+										},
+										Alpha: 0,
+										Name: gun,
+										Result: "",
+									},
+									Penguin:PenguinMessage{
+										Clockwise:false,
+										Alpha: 0,
+										Name: penguin,
+										Result: "",
+									},
+								},
+							}
+							g.mu.Unlock()
+							continue LOOP
+						}
+					}
+
+					//если все комнаты заняты - делой новую
+					room := NewRoomMulti(2)
+					g.mu.Lock()
+					g.AddToRoomMulti(room)
 					g.mu.Unlock()
-					continue LOOP
+
+					go room.Run()
+
+					g.mu.Lock()
+					room.AddPlayer(player)
+					player.out <- &OutcomeMessage{Type: WAIT}
+					g.mu.Unlock()
+				default:
+					fmt.Println("Empty")
 				}
-			}
-
-			//если все комнаты заняты - делой новую
-			room := NewRoomMulti(2)
-			g.mu.Lock()
-			g.AddToRoomMulti(room)
-			g.mu.Unlock()
-
-			go room.Run()
-
-			g.mu.Lock()
-			room.AddPlayer(player)
-			player.out <- &OutcomeMessage{Type: WAIT}
-			g.mu.Unlock()
-		default:
-			fmt.Println("Empty")
+		case <-g.unregister:
+			//remove from rooms
 		}
+
 	}
 }
 

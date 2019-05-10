@@ -16,12 +16,14 @@ type PenguinMessage struct {
 	Name string `json:"name"`
 	Clockwise bool `json:"clockwise"`
 	Alpha int `json:"alpha"`
+	Result string `json:"result"`
 }
 
 type GunMessage struct {
 	Name string `json:"name"`
 	Bullet BulletMessage `json:"bullet"`
 	Alpha int `json:"alpha"`
+	Result string `json:"result"`
 }
 
 type BulletMessage struct {
@@ -33,7 +35,7 @@ type BulletMessage struct {
 //(это я ТОЛЬКО парсю и никогда не шлю)
 type IncomeMessage struct {
 	Type string `json:"type"`
-	Payload InPayloadMessage `json:"payload,omitempty"`
+	Payload InPayloadMessage `json:"payload"`
 }
 
 type InPayloadMessage struct {

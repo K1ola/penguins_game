@@ -26,7 +26,7 @@ func NewRoomSingle(MaxPlayers uint) *RoomSingle {
 		Player:    new(Player),
 		register:   make(chan *Player),
 		unregister: make(chan *Player),
-		ticker:     time.NewTicker(100 * time.Millisecond),
+		ticker:     time.NewTicker(2 * time.Second),
 		state: &RoomState{
 			Penguin: new(PenguinState),
 			Fishes: make(map[int]*FishState, 24),
@@ -50,8 +50,9 @@ func (r *RoomSingle) Run() {
 			r.Player = player
 			r.mu.Unlock()
 			LogMsg("Player " + player.ID + " joined")
-			r.Player.out <- &OutcomeMessage{Type:START}
+			//r.Player.out <- &OutcomeMessage{Type:START}
 		case <-r.ticker.C:
+			r.broadcast <- &OutcomeMessage{Type:STATE}
 			//ProcessGameSingle(r)
 		case player := <- r.finish:
 			LogMsg("Player " + player.ID + " finished game")
