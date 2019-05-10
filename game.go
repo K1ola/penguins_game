@@ -21,9 +21,6 @@ const (
 	NEWPLAYER  = "newPlayer"
 	NEWCOMMAND = "newCommand"
 
-	ROTATE = "ROTATE"
-	SHOT = "SHOT"
-
 	PENGUIN = "PENGUIN"
 	GUN = "GUN"
 )

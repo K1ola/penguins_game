@@ -68,14 +68,7 @@ func (p *Player) Listen() {
 						PingGame.AddPlayer(p)
 					}
 				case NEWCOMMAND:
-					switch message.Payload.Command {
-					case ROTATE:
-						//do rotate
-					case SHOT:
-						//do shot
-					default:
-						fmt.Println("Invalid command")
-					}
+					//get name, do rotate
 				default:
 					fmt.Println("Default in Player.Listen() - in")
 			}
@@ -96,13 +89,6 @@ func (p *Player) Listen() {
 					fmt.Println("Default in Player.Listen() - out")
 			}
 			_ = p.conn.WriteJSON(message)
-			//if p.GameMode != "" {
-			//	if p.roomSingle != nil {
-			//		p.roomSingle.broadcast <- message
-			//	} else {
-			//		p.roomMulti.broadcast <- message
-			//	}
-			//}
 		}
 	}
 }
