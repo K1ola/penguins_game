@@ -69,7 +69,7 @@ LOOP:
 							g.mu.Lock()
 							room.AddPlayer(player)
 							g.mu.Unlock()
-							room.broadcast <- &OutcomeMessage{
+							player.out <- &OutcomeMessage{
 								Type: START,
 								Payload:OutPayloadMessage{
 									Gun:GunMessage{
