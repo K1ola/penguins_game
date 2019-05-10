@@ -143,7 +143,7 @@ LOOP:
 								}
 							}
 							//player.out <- &OutcomeMessage{Type:START}
-							player.out <- &OutcomeMessage{
+							room.broadcast <- &OutcomeMessage{
 								Type: START,
 								Payload:OutPayloadMessage{
 									Gun:GunMessage{
