@@ -35,6 +35,8 @@ func InitGame(rooms uint) *Game {
 	return NewGame(maxRooms)
 }
 
+
+
 type Game struct {
 	MaxRooms    uint
 	roomsSingle []*RoomSingle

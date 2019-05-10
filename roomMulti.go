@@ -16,7 +16,9 @@ type RoomMulti struct {
 	register   chan *Player
 	unregister chan *Player
 	ticker     *time.Ticker
+	//TODO is needed?
 	state      *RoomState
+	gameState string
 
 	broadcast chan *OutcomeMessage
 	finish chan *Player
@@ -69,6 +71,8 @@ func (r *RoomMulti) Run() {
 						PiscesCount: 24,
 					},
 				}
+
+				r.gameState = START
 				for _, player := range r.Players {
 					select {
 					case player.out <- message:
@@ -88,8 +92,18 @@ func (r *RoomMulti) Run() {
 			}
 			//HandleCommand(r, message)
 		case <-r.ticker.C:
-			//r.broadcast <- &OutcomeMessage{Type:STATE}
-			//ProcessGameMulti(r)
+			if r.gameState == START {
+				message := &OutcomeMessage{Type:STATE}
+
+				for _, player := range r.Players {
+					select {
+					case player.out <- message:
+					default:
+						close(player.out)
+					}
+				}
+				//ProcessGameMulti(r)
+			}
 		case player := <- r.finish:
 			LogMsg("Player " + player.ID + " finished game")
 			player.out <- &OutcomeMessage{Type:FINISH}
