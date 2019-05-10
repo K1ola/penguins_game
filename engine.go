@@ -1,8 +1,10 @@
 package main
-//
-//import (
-//	"math"
-//)
+
+import (
+	"fmt"
+	"math/rand"
+)
+
 //
 //const ownRandom = 0.25
 //
@@ -138,27 +140,67 @@ package main
 //		}
 //	}
 //}
-//
-//func HandleCommand(r *Room, msg *Message) {
-//		switch msg.Payload.Command {
-//			case "SHOT":
-//				ShotPlayer(r.state.Players[msg.Type], r.state.Bullet)
-//				for t, player := range r.state.Players {
-//					if player.Shoted {
-//						r.Players[t].out <- &Message{"SINGLE", PayloadMessage{msg.Type, "KILLED"}}
-//						message := &Message{"SINGLE", PayloadMessage{player.ID, "GAME FINISHED"}}
-//						r.Players[t].SendMessage(message)
-//					}
-//				}
-//			case "ROTATE":
-//				RotatePlayer(r.state.Players[msg.Type])
-//				r.Players[msg.Type].out <- &Message{"SINGLE", PayloadMessage{msg.Type, "ROTATED"}}
-//		}
-//}
-//
+
 //func FinishGame(r *Room) {
 //	for _, player := range r.Players {
 //		message := &Message{"SINGLE", PayloadMessage{player.ID, "GAME FINISHED"}}
 //		player.SendMessage(message)
 //		}
 //}
+
+func RunMulti(room *RoomMulti) {
+	state := CreateInitialState(room)
+	fmt.Println(state)
+}
+
+func CreateInitialState(room *RoomMulti) *RoomState {
+	state := new(RoomState)
+	var penguin, gun string
+	for _, player := range room.Players {
+		if player.Type == PENGUIN {
+			penguin = player.ID
+		} else {
+			gun = player.ID
+		}
+	}
+	state.Penguin = CreatePenguin(penguin)
+	state.Gun = CreateGun(gun)
+	state.Fishes = CreateFishes()
+	return state
+}
+
+func CreatePenguin(id string) *PenguinState {
+	return &PenguinState{
+		ID: id,
+		Result: "",
+		Alpha: rand.Intn(360),
+		Score: 0,
+		ClockwiseDirection: true,
+	}
+}
+
+func CreateGun(id string) *GunState {
+	return &GunState{
+		ID: id,
+		Result: "",
+		Alpha: rand.Intn(360),
+		Score: 0,
+		ClockwiseDirection: true,
+		Bullet: CreateBullet(),
+	}
+}
+
+func CreateBullet() *BulletState {
+	return &BulletState{
+		Alpha: rand.Intn(360),
+		DistanceFromCenter: 0,
+	}
+}
+
+func CreateFishes() map[int]*FishState {
+	fishes := make(map[int]*FishState, 24)
+	for i := 0; i < 24; i++ {
+		fishes[i] = &FishState{Eaten: false, Alpha: 360/24*i}
+	}
+	return fishes
+}

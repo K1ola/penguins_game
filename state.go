@@ -6,13 +6,17 @@ type PenguinState struct {
 	ID                 string
 	ClockwiseDirection bool
 	Alpha              int
+	Result 			   string
 	Score              int
 }
 
 type GunState struct {
 	ID                 string
+	ClockwiseDirection bool
 	Alpha              int
 	Bullet 			   *BulletState
+	Result 			   string
+	Score              int
 }
 
 type BulletState struct {
@@ -21,8 +25,6 @@ type BulletState struct {
 }
 
 type FishState struct {
-	//ID int
-	//X, Y int
 	Alpha int
 	Eaten bool
 }

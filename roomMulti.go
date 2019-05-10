@@ -80,6 +80,7 @@ func (r *RoomMulti) Run() {
 						close(player.out)
 					}
 				}
+				RunMulti(r)
 			}
 		case message := <- r.broadcast:
 			fmt.Println("IN BROADCAST")

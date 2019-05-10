@@ -69,6 +69,7 @@ func (p *Player) Listen() {
 					}
 				case NEWCOMMAND:
 					//get name, do rotate
+
 				default:
 					fmt.Println("Default in Player.Listen() - in")
 			}
