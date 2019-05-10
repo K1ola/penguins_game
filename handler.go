@@ -13,7 +13,7 @@ import (
 )
 
 func StartSingle(w http.ResponseWriter, r *http.Request) {
-	if PingGame.RoomsCount() >= 10 {
+	if PingGame.RoomsCount() >= int(maxRooms) {
 		//TODO check response on the client side
 		LogMsg("Too many clients")
 		w.WriteHeader(http.StatusTooManyRequests)
