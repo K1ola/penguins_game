@@ -104,16 +104,30 @@ LOOP:
 					g.mu.Lock()
 					room.AddPlayer(player)
 					g.mu.Unlock()
-					room.broadcast <- &OutcomeMessage{Type: START}
-
+					//room.broadcast <- &OutcomeMessage{Type: START}
+					player.out <- &OutcomeMessage{
+						Type: START,
+						Payload:OutPayloadMessage{
+							Gun:GunMessage{
+								Bullet:BulletMessage{
+									Alpha: 0,
+									DistanceFromCenter: 0,
+								},
+								Alpha: 0,
+								Name: GUN,
+								Result: "",
+							},
+							Penguin:PenguinMessage{
+								Clockwise:false,
+								Alpha: 0,
+								Name: player.ID,
+								Result: "",
+							},
+						},
+					}
 				case MULTI:
 					//start roomMulty
 					var penguin, gun string
-
-					//select random roles to players in each room
-					//for _, room := range g.roomsMulti {
-					//
-					//}
 
 					for _, room := range g.roomsMulti {
 						if len(room.Players) < int(room.MaxPlayers) {
@@ -129,7 +143,7 @@ LOOP:
 								}
 							}
 							//player.out <- &OutcomeMessage{Type:START}
-							room.broadcast <- &OutcomeMessage{
+							player.out <- &OutcomeMessage{
 								Type: START,
 								Payload:OutPayloadMessage{
 									Gun:GunMessage{
