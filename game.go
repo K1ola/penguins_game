@@ -44,6 +44,8 @@ type Game struct {
 	mu       sync.RWMutex
 	register chan *Player
 	unregister chan *Player
+
+	Players    map[string]*Player
 }
 
 func NewGame(maxRooms uint) *Game {
@@ -51,6 +53,7 @@ func NewGame(maxRooms uint) *Game {
 		MaxRooms: maxRooms,
 		register: make(chan *Player),
 		unregister: make(chan *Player),
+		Players:    make(map[string]*Player),
 	}
 }
 
@@ -170,6 +173,9 @@ func (g *Game) AddToRoomMulti(room *RoomMulti) {
 
 func (g *Game) AddPlayer(player *Player) {
 	LogMsg("Player " + player.ID + " queued to add")
+	g.mu.Lock()
+	g.Players[player.ID] = player
+	g.mu.Unlock()
 	metrics.PlayersCountInGame.Inc()
 	g.register <- player
 }

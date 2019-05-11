@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	//"game/helpers"
 	"game/models"
 	"net/http"
@@ -72,6 +73,18 @@ func StartMulti(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
+
+		//check if such user already in game
+		fmt.Println(PingGame.Players)
+		for _, player := range PingGame.Players {
+			if player.ID == user.Login {
+				LogMsg("Such user already in game")
+				//TODO remove all users in game?
+				w.WriteHeader(http.StatusForbidden)
+				return
+			}
+		}
+
 		cookie.Value = user.Login
 	}
 
