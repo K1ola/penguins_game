@@ -228,10 +228,12 @@ func (rs *RoomState) RecalcBullet() *OutcomeMessage{
 				Type:FINISH,
 				Payload:OutPayloadMessage{
 					Penguin:PenguinMessage{
+						Name: rs.Penguin.ID,
 						Score: uint(rs.Penguin.Score),
 						Result:LOST,
 					},
 					Gun:GunMessage{
+						Name: rs.Gun.ID,
 						Score: uint(rs.Gun.Score),
 						Result:WIN,
 					},
@@ -280,10 +282,12 @@ func (rs *RoomState) RecalcPenguin() *OutcomeMessage{
 				Type:FINISH,
 				Payload:OutPayloadMessage{
 					Penguin:PenguinMessage{
+						Name: rs.Penguin.ID,
 						Score: uint(rs.Penguin.Score),
 						Result:WIN,
 					},
 					Gun:GunMessage{
+						Name: rs.Gun.ID,
 						Score: uint(rs.Gun.Score),
 						Result:LOST,
 					},

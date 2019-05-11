@@ -1,8 +1,6 @@
 package main
 
 import (
-	//"game/helpers"
-	"fmt"
 	"math/rand"
 	"sync"
 	"time"
@@ -16,7 +14,6 @@ type RoomMulti struct {
 	register   chan *Player
 	unregister chan *Player
 	ticker     *time.Ticker
-	//TODO is needed?
 	state      *RoomState
 	gameState string
 
@@ -55,7 +52,6 @@ func (r *RoomMulti) Run() {
 			r.Players[player.ID] = player
 			r.mu.Unlock()
 			LogMsg("Player " + player.ID + " joined")
-			//r.broadcast <- &OutcomeMessage{Type:START}
 			if len(r.Players) == 2 {
 				penguin, gun := r.SelectPlayersRoles()
 
@@ -73,38 +69,19 @@ func (r *RoomMulti) Run() {
 				}
 
 				r.gameState = START
-				for _, player := range r.Players {
-					select {
-					case player.out <- message:
-					default:
-						close(player.out)
-					}
-				}
+				r.SendRoomState(message)
 				r.state = CreateInitialState(r)
 
 			}
-		case message := <- r.broadcast:
-			fmt.Println("IN BROADCAST")
-			for _, player := range r.Players {
-				select {
-				case player.out <- message:
-				default:
-					close(player.out)
-				}
-			}
+		//case message := <- r.broadcast:
+		//	r.SendRoomState(message)
 		case <-r.ticker.C:
 			if r.gameState == START {
 				  message := RunMulti(r)
 				  if message.Type != STATE {
 				  	r.gameState = FINISH
 				  }
-				for _, player := range r.Players {
-					select {
-					case player.out <- message:
-					default:
-						close(player.out)
-					}
-				}
+				  r.SendRoomState(message)
 			}
 		//case player := <- r.finish:
 		//	LogMsg("Player " + player.ID + " finished game")
@@ -155,3 +132,14 @@ func (r *RoomMulti) FinishGame(player *Player) {
 	r.state.Penguin = nil
 	r.state.Gun = nil
 }
+
+func (r *RoomMulti) SendRoomState(message *OutcomeMessage) {
+	for _, player := range r.Players {
+		select {
+		case player.out <- message:
+		default:
+			close(player.out)
+		}
+	}
+}
+
