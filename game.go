@@ -146,6 +146,7 @@ LOOP:
 					g.mu.Unlock()
 
 					go room.Run()
+					//helpers.RecoverPanic(room.Run)
 
 					g.mu.Lock()
 					room.AddPlayer(player)

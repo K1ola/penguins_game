@@ -3,6 +3,7 @@ package main
 import (
 	//"game/helpers"
 	"fmt"
+	"game/helpers"
 	"game/metrics"
 	"github.com/gorilla/websocket"
 	"log"
@@ -32,7 +33,9 @@ func NewPlayer(conn *websocket.Conn, id string) *Player {
 }
 
 func (p *Player) Listen() {
+	defer helpers.RecoverPanic()
 	go func() {
+		defer helpers.RecoverPanic()
 		for {
 			//слушаем фронт
 			message := &IncomeMessage{}
