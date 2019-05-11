@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"game/helpers"
 	"math/rand"
 	"sync"
 	"time"
@@ -41,7 +40,7 @@ func NewRoomMulti(MaxPlayers uint) *RoomMulti {
 }
 
 func (r *RoomMulti) Run() {
-	defer helpers.RecoverPanic()
+	//defer helpers.RecoverPanic()
 	LogMsg("Room Multi loop started")
 	//r.state.Gun.Bullet = CreateBullet(r)
 	//GameInit(r)

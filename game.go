@@ -3,6 +3,7 @@ package main
 import (
 	//"game/helpers"
 	"fmt"
+	"game/helpers"
 	"game/metrics"
 	"sync"
 )
@@ -35,8 +36,6 @@ func InitGame(rooms uint) *Game {
 	return NewGame(maxRooms)
 }
 
-
-
 type Game struct {
 	MaxRooms    uint
 	roomsSingle []*RoomSingle
@@ -56,13 +55,11 @@ func NewGame(maxRooms uint) *Game {
 }
 
 func (g *Game) Run() {
+	defer helpers.RecoverPanic()
 LOOP:
 	for {
 		select {
 		case player, _ := <-g.register:
-			//fmt.Println("register ch is ", ok)
-			//fmt.Println("State is "+ player.GameMode)
-
 			switch player.GameMode {
 				case SINGLE:
 					//start roomSingle
@@ -106,7 +103,6 @@ LOOP:
 					g.mu.Lock()
 					room.AddPlayer(player)
 					g.mu.Unlock()
-					//room.broadcast <- &OutcomeMessage{Type: START}
 					player.out <- &OutcomeMessage{
 						Type: START,
 						Payload:OutPayloadMessage{
@@ -146,7 +142,6 @@ LOOP:
 					g.mu.Unlock()
 
 					go room.Run()
-					//helpers.RecoverPanic(room.Run)
 
 					g.mu.Lock()
 					room.AddPlayer(player)
@@ -157,6 +152,7 @@ LOOP:
 				}
 		case <-g.unregister:
 			//remove from rooms
+			//(do mot forget to free pointers - use same logic as with players)
 		}
 
 	}

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"game/helpers"
 	//"game/helpers"
 	"sync"
 	"time"
@@ -38,7 +37,7 @@ func NewRoomSingle(MaxPlayers uint) *RoomSingle {
 }
 
 func (r *RoomSingle) Run() {
-	defer helpers.RecoverPanic()
+	//defer helpers.RecoverPanic()
 	LogMsg("Room Single loop started")
 	//r.state.Gun.Bullet = CreateBullet(r)
 	//GameInit(r)

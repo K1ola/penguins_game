@@ -3,7 +3,6 @@ package main
 import (
 	//"game/helpers"
 	"fmt"
-	"game/helpers"
 	"game/metrics"
 	"github.com/gorilla/websocket"
 	"log"
@@ -33,9 +32,9 @@ func NewPlayer(conn *websocket.Conn, id string) *Player {
 }
 
 func (p *Player) Listen() {
-	defer helpers.RecoverPanic()
+	//defer helpers.RecoverPanic()
 	go func() {
-		defer helpers.RecoverPanic()
+		//defer helpers.RecoverPanic()
 		for {
 			//слушаем фронт
 			message := &IncomeMessage{}
@@ -57,9 +56,8 @@ func (p *Player) Listen() {
 
 	for {
 		select {
-		//получаем состояние игры от фронтов
+		//получаем команды от фронтов
 		case message := <-p.in:
-			//оработать, посчитать
 			fmt.Printf("Front says: %#v", message)
 			fmt.Println("")
 			switch message.Type {
@@ -81,6 +79,7 @@ func (p *Player) Listen() {
 
 		case message := <-p.out:
 			fmt.Printf("Back says: %#v", message)
+			fmt.Println("")
 			//шлем всем фронтам текущее состояние
 			switch message.Type {
 				case START:
@@ -118,14 +117,3 @@ func (p *Player) Finish() {
 	}
 }
 
-//func (p *Player) SendState(state *RoomState) {
-//	//TODO: send to front
-//	if state != nil {
-//		//TODO create norm state
-//		p.out <- &Message{"SINGLE", PayloadMessage{"STATE", "SOME-STATE"}}
-//	}
-//}
-//
-//func (p *Player) SendMessageSingle(message *OutcomeMessage) {
-//	p.roomSingle.broadcast <- message
-//}

@@ -188,6 +188,7 @@ func RunMulti(room *RoomMulti) *OutcomeMessage {
 		}
 		return msg
 	}
+	room.state.RecalcGun()
 	msg = room.state.RecalcBullet()
 	if msg != nil {
 		for _, player := range room.Players {
@@ -216,8 +217,21 @@ func CreateInitialState(room *RoomMulti) *RoomState {
 	return state
 }
 
-func (rs *RoomState) RecalcGun() *OutcomeMessage{
-	return nil
+func (rs *RoomState) RecalcGun() {
+	if rs.Gun.Alpha == 360 {
+		rs.Gun.Alpha = 0
+	}
+
+	if rs.Gun.Alpha <= -1 {
+		rs.Gun.Alpha = 359
+	}
+
+	if rs.Gun.ClockwiseDirection {
+		rs.Gun.Alpha += 3
+	} else {
+		rs.Gun.Alpha -= 3
+	}
+	//return nil
 }
 
 func (rs *RoomState) RecalcBullet() *OutcomeMessage{
