@@ -322,7 +322,7 @@ func (rs *RoomState) GetState() *OutcomeMessage {
 					Alpha: rs.Gun.Bullet.Alpha,
 					DistanceFromCenter: rs.Gun.Bullet.DistanceFromCenter,
 				},
-				Clockwise: rs.Penguin.ClockwiseDirection,
+				Clockwise: rs.Gun.ClockwiseDirection,
 			},
 			PiscesCount: 24,
 		},
