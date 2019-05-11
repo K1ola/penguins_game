@@ -105,14 +105,11 @@ func (r *RoomMulti) Run() {
 						close(player.out)
 					}
 				}
-				//ProcessGameMulti(r)
 			}
-		case player := <- r.finish:
-			LogMsg("Player " + player.ID + " finished game")
-			//player.out <- &OutcomeMessage{Type:FINISH}
-			r.state.Penguin = nil
-			r.state.Gun = nil
-			//FinishGame(r)
+		//case player := <- r.finish:
+		//	LogMsg("Player " + player.ID + " finished game")
+		//	r.state.Penguin = nil
+		//	r.state.Gun = nil
 		}
 	}
 }
@@ -137,7 +134,6 @@ func (r *RoomMulti) RemovePlayer(player *Player) {
 
 func (r *RoomMulti) SelectPlayersRoles() (string, string) {
 	var penguin, gun string
-
 	digit := rand.Intn(2)
 	for _, player := range r.Players {
 		if digit == 0 {
@@ -156,7 +152,6 @@ func (r *RoomMulti) SelectPlayersRoles() (string, string) {
 func (r *RoomMulti) FinishGame(player *Player) {
 	//r.finish <- player
 	LogMsg("Player " + player.ID + " finished game")
-				//player.out <- &OutcomeMessage{Type:FINISH}
-				r.state.Penguin = nil
-				r.state.Gun = nil
+	r.state.Penguin = nil
+	r.state.Gun = nil
 }
