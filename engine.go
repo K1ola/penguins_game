@@ -253,13 +253,26 @@ func (rs *RoomState) RecalcBullet() *OutcomeMessage{
 					},
 				}}
 		}
-		if rs.Penguin.ClockwiseDirection {
-			rs.Gun.Bullet.Alpha = rs.Penguin.Alpha + rand.Intn(101)
-		} else {
-			rs.Gun.Bullet.Alpha = rs.Penguin.Alpha - rand.Intn(101)
-		}
-		rs.Gun.Bullet.DistanceFromCenter = 0
 
+		rs.Gun.Bullet.Alpha = rs.Gun.Alpha
+		//TODO it is single mode logic
+		//if rs.Penguin.ClockwiseDirection {
+		//	alpha := rs.Penguin.Alpha + rand.Intn(101)
+		//	if alpha >= 360 {
+		//		rs.Gun.Bullet.Alpha = alpha - 360
+		//	} else {
+		//		rs.Gun.Bullet.Alpha = alpha
+		//	}
+		//	rs.Gun.Bullet.Alpha = rs.Penguin.Alpha + rand.Intn(101)
+		//} else {
+		//	alpha := rs.Penguin.Alpha - rand.Intn(101)
+		//	if alpha < 0 {
+		//		rs.Gun.Bullet.Alpha = 360 + alpha
+		//	} else {
+		//		rs.Gun.Bullet.Alpha = alpha
+		//	}
+		//}
+		rs.Gun.Bullet.DistanceFromCenter = 0
 	}
 	rs.Gun.Bullet.DistanceFromCenter += 5
 	return nil
