@@ -69,6 +69,8 @@ func (p *Player) Listen() {
 					}
 				case NEWCOMMAND:
 					//get name, do rotate
+					//TODO select game mode
+					p.roomMulti.ProcessCommand(message)
 
 				default:
 					fmt.Println("Default in Player.Listen() - in")
@@ -105,7 +107,7 @@ func (p *Player) RemovePlayerFromRoom() {
 
 func (p *Player) Finish() {
 	if p.roomSingle != nil {
-		//TODO
+		//TODO finish single
 		//p.roomSingle.(p)
 	}
 	if p.roomMulti != nil {

@@ -27,6 +27,7 @@ type GunMessage struct {
 	Alpha int `json:"alpha"`
 	Result string `json:"result"`
 	Score uint `json:"score"`
+	Clockwise bool `json:"clockwise"`
 }
 
 type BulletMessage struct {

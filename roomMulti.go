@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"math/rand"
 	"sync"
 	"time"
@@ -27,7 +28,7 @@ func NewRoomMulti(MaxPlayers uint) *RoomMulti {
 		Players:    make(map[string]*Player),
 		register:   make(chan *Player),
 		unregister: make(chan *Player),
-		ticker:     time.NewTicker(100 * time.Millisecond),
+		ticker:     time.NewTicker(1 * time.Second),
 		state: &RoomState{
 			Penguin: new(PenguinState),
 			Gun: new(GunState),
@@ -54,7 +55,6 @@ func (r *RoomMulti) Run() {
 			LogMsg("Player " + player.ID + " joined")
 			if len(r.Players) == 2 {
 				penguin, gun := r.SelectPlayersRoles()
-
 				message := &OutcomeMessage{
 					Type: START,
 					Payload: OutPayloadMessage{
@@ -67,14 +67,13 @@ func (r *RoomMulti) Run() {
 						PiscesCount: 24,
 					},
 				}
-
 				r.gameState = START
 				r.SendRoomState(message)
 				r.state = CreateInitialState(r)
 
 			}
-		//case message := <- r.broadcast:
-		//	r.SendRoomState(message)
+		case message := <- r.broadcast:
+			r.SendRoomState(message)
 		case <-r.ticker.C:
 			if r.gameState == START {
 				  message := RunMulti(r)
@@ -124,6 +123,25 @@ func (r *RoomMulti) SelectPlayersRoles() (string, string) {
 		}
 	}
 	return penguin, gun
+}
+
+func (r *RoomMulti) ProcessCommand(message *IncomeMessage) {
+	login := message.Payload.Name
+	for _, player := range r.Players {
+		if player.ID != login {
+			continue
+		}
+		fmt.Println(r.state)
+		switch player.Type {
+		case PENGUIN:
+			r.state.RotatePenguin()
+		case GUN:
+			r.state.RotateGun()
+		default:
+			fmt.Println("Incorrect player type!")
+		}
+		break
+	}
 }
 
 func (r *RoomMulti) FinishGame(player *Player) {

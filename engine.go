@@ -177,10 +177,6 @@ func CreateFishes() map[int]*FishState {
 //}
 
 //func FinishGame(r *Room) {
-//	for _, player := range r.Players {
-//		message := &Message{"SINGLE", PayloadMessage{player.ID, "GAME FINISHED"}}
-//		player.SendMessage(message)
-//		}
 //}
 
 func RunMulti(room *RoomMulti) *OutcomeMessage {
@@ -216,9 +212,13 @@ func CreateInitialState(room *RoomMulti) *RoomState {
 	state.Penguin = CreatePenguin(penguin)
 	state.Gun = CreateGun(gun)
 	state.Fishes = CreateFishes()
+	room.state = state
 	return state
 }
 
+func (rs *RoomState) RecalcGun() *OutcomeMessage{
+	return nil
+}
 
 func (rs *RoomState) RecalcBullet() *OutcomeMessage{
 	if rs.Gun.Bullet.DistanceFromCenter > 100*0.8/2 {
@@ -322,9 +322,26 @@ func (rs *RoomState) GetState() *OutcomeMessage {
 					Alpha: rs.Gun.Bullet.Alpha,
 					DistanceFromCenter: rs.Gun.Bullet.DistanceFromCenter,
 				},
+				Clockwise: rs.Penguin.ClockwiseDirection,
 			},
 			PiscesCount: 24,
 		},
 	}
+}
+
+func (rs *RoomState) RotatePenguin() {
+		if rs.Penguin.ClockwiseDirection {
+			rs.Penguin.ClockwiseDirection = false
+		} else {
+			rs.Penguin.ClockwiseDirection = true
+		}
+}
+
+func (rs *RoomState) RotateGun() {
+		if rs.Gun.ClockwiseDirection {
+			rs.Gun.ClockwiseDirection = false
+		} else {
+			rs.Gun.ClockwiseDirection = true
+		}
 }
 
