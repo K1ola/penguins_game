@@ -218,7 +218,7 @@ func CreateInitialState(room *RoomMulti) *RoomState {
 }
 
 func (rs *RoomState) RecalcGun() {
-	if rs.Gun.Alpha == 360 {
+	if rs.Gun.Alpha >= 360 {
 		rs.Gun.Alpha = 0
 	}
 
