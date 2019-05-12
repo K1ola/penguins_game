@@ -166,11 +166,11 @@ func TestPlayer(t *testing.T) {
 }
 
 func Player2(w http.ResponseWriter, r *http.Request) {
-
 	upgrader := &websocket.Upgrader{}
 
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 	conn, err := upgrader.Upgrade(w, r, nil)
+	fmt.Println(err)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -179,12 +179,14 @@ func Player2(w http.ResponseWriter, r *http.Request) {
 	incomeMessage.Payload.Name = "user6"
 	incomeMessage.Payload.Mode = "MULTI"
 	player := NewPlayer(conn, "1")
-	player.conn.WriteJSON(incomeMessage)
+	go func() {
+		err = player.conn.WriteJSON(incomeMessage)
+		fmt.Println(err)
+	}()
 	// player.Listen()
 
-	player.in <- incomeMessage
-	player.Listen()
-
+	//player.in <- incomeMessage
+	go player.Listen()
 }
 
 func TestPlayer2(t *testing.T) {
@@ -199,7 +201,13 @@ func TestPlayer2(t *testing.T) {
 		t.Fatalf("%v", err)
 	}
 	defer ws.Close()
-	if err := ws.WriteMessage(websocket.TextMessage, []byte("hello")); err != nil {
+
+	incomeMessage := new(IncomeMessage)
+	incomeMessage.Type = "newRound"
+	incomeMessage.Payload.Name = "user6"
+	incomeMessage.Payload.Mode = "MULTI"
+
+	if err := ws.WriteJSON(incomeMessage); err != nil {
 		t.Fatalf("%v", err)
 	}
 }

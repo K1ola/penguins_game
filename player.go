@@ -34,6 +34,7 @@ func NewPlayer(conn *websocket.Conn, id string) *Player {
 
 func (p *Player) Listen() {
 	// defer helpers.RecoverPanic()
+	//fmt.Println("hi")
 	go func() {
 		// defer helpers.RecoverPanic()
 		for {
@@ -48,9 +49,9 @@ func (p *Player) Listen() {
 				return
 			}
 			if err != nil {
-				_, msg, _ := p.conn.ReadMessage()
+				_, _, err := p.conn.ReadMessage()
 				log.Printf("Cannot read json: ")
-				fmt.Println(msg)
+				fmt.Println(err)
 				continue
 			}
 			p.in <- message
