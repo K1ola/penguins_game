@@ -4,37 +4,38 @@ import (
 	//"game/helpers"
 	"fmt"
 	"game/metrics"
-	"github.com/gorilla/websocket"
 	"log"
+
+	"github.com/gorilla/websocket"
 )
 
 type Player struct {
-	conn *websocket.Conn
-	ID   string
-	in   chan *IncomeMessage
-	out  chan *OutcomeMessage
+	conn       *websocket.Conn
+	ID         string
+	in         chan *IncomeMessage
+	out        chan *OutcomeMessage
 	roomSingle *RoomSingle
-	roomMulti *RoomMulti
-	GameMode string
-	Type string
+	roomMulti  *RoomMulti
+	GameMode   string
+	Type       string
 }
 
 func NewPlayer(conn *websocket.Conn, id string) *Player {
 	return &Player{
-		conn: conn,
-		ID:   id,
-		in:   make(chan *IncomeMessage),
-		out:  make(chan *OutcomeMessage, 1),
-		roomMulti: nil,
+		conn:       conn,
+		ID:         id,
+		in:         make(chan *IncomeMessage),
+		out:        make(chan *OutcomeMessage, 1),
+		roomMulti:  nil,
 		roomSingle: nil,
-		Type: PENGUIN,
+		Type:       PENGUIN,
 	}
 }
 
 func (p *Player) Listen() {
-	//defer helpers.RecoverPanic()
+	// defer helpers.RecoverPanic()
 	go func() {
-		//defer helpers.RecoverPanic()
+		// defer helpers.RecoverPanic()
 		for {
 			//слушаем фронт
 			message := &IncomeMessage{}
@@ -42,12 +43,14 @@ func (p *Player) Listen() {
 			fmt.Println("ReadJSON error: ", err)
 			if websocket.IsUnexpectedCloseError(err) {
 				p.RemovePlayerFromRoom()
-				LogMsg("Player " + p.ID +" disconnected")
+				LogMsg("Player " + p.ID + " disconnected")
 				metrics.PlayersCountInGame.Dec()
 				return
 			}
 			if err != nil {
-				log.Printf("Cannot read json")
+				_, msg, _ := p.conn.ReadMessage()
+				log.Printf("Cannot read json: ")
+				fmt.Println(msg)
 				continue
 			}
 			p.in <- message
@@ -61,20 +64,20 @@ func (p *Player) Listen() {
 			fmt.Printf("Front says: %#v", message)
 			fmt.Println("")
 			switch message.Type {
-				case NEWPLAYER:
-					//стартовая инициализация, производится строго вначале один раз
-					if message.Payload.Mode != "" {
-						p.GameMode = message.Payload.Mode
-						//p.ID = message.Payload.Name
-						PingGame.AddPlayer(p)
-					}
-				case NEWCOMMAND:
-					//get name, do rotate
-					//TODO select game mode
-					p.roomMulti.ProcessCommand(message)
+			case NEWPLAYER:
+				//стартовая инициализация, производится строго вначале один раз
+				if message.Payload.Mode != "" {
+					p.GameMode = message.Payload.Mode
+					//p.ID = message.Payload.Name
+					PingGame.AddPlayer(p)
+				}
+			case NEWCOMMAND:
+				//get name, do rotate
+				//TODO select game mode
+				p.roomMulti.ProcessCommand(message)
 
-				default:
-					fmt.Println("Default in Player.Listen() - in")
+			default:
+				fmt.Println("Default in Player.Listen() - in")
 			}
 
 		case message := <-p.out:
@@ -82,16 +85,16 @@ func (p *Player) Listen() {
 			fmt.Println("")
 			//шлем всем фронтам текущее состояние
 			switch message.Type {
-				case START:
-					fmt.Println("Process START")
-				case WAIT:
-					fmt.Println("Process WAIT")
-				case FINISH:
-					fmt.Println("Process FINISH")
-				case STATE:
-					fmt.Println("Process STATE")
-				default:
-					fmt.Println("Default in Player.Listen() - out")
+			case START:
+				fmt.Println("Process START")
+			case WAIT:
+				fmt.Println("Process WAIT")
+			case FINISH:
+				fmt.Println("Process FINISH")
+			case STATE:
+				fmt.Println("Process STATE")
+			default:
+				fmt.Println("Default in Player.Listen() - out")
 			}
 			_ = p.conn.WriteJSON(message)
 		}
@@ -116,4 +119,3 @@ func (p *Player) Finish() {
 		p.roomMulti.FinishGame(p)
 	}
 }
-

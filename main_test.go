@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/gorilla/websocket"
@@ -147,8 +148,62 @@ func TestHandlers(t *testing.T) {
 
 func TestPlayer(t *testing.T) {
 	roomSingle := NewRoomSingle(2)
+	// upgrader := &websocket.Upgrader{}
+	// w := httptest.NewRecorder()
+	// r, _ := http.NewRequest("GET", "/game/multi", nil)
+	// upgrader.CheckOrigin = func(r *http.Request) bool { return true }
+	// conn, err := upgrader.Upgrade(w, r, nil)
+	// if err != nil {
+	// 	t.Error(err)
+	// }
+	// incomeMessage := new(IncomeMessage)
 	var conn *websocket.Conn
+	// conn.WriteJSON(incomeMessage)
 	player := NewPlayer(conn, "1")
 	player.roomSingle = roomSingle
 	player.Finish()
+	// player.Listen()
 }
+
+func Player2(w http.ResponseWriter, r *http.Request) {
+
+	upgrader := &websocket.Upgrader{}
+
+	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		fmt.Println(err)
+	}
+	incomeMessage := new(IncomeMessage)
+	incomeMessage.Type = "newRound"
+	incomeMessage.Payload.Name = "user6"
+	incomeMessage.Payload.Mode = "MULTI"
+	player := NewPlayer(conn, "1")
+	player.conn.WriteJSON(incomeMessage)
+	// player.Listen()
+
+	player.in <- incomeMessage
+	player.Listen()
+
+}
+
+func TestPlayer2(t *testing.T) {
+	s := httptest.NewServer(http.HandlerFunc(Player2))
+	defer s.Close()
+
+	u := "ws" + strings.TrimPrefix(s.URL, "http")
+
+	// Connect to the server
+	ws, _, err := websocket.DefaultDialer.Dial(u, nil)
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	defer ws.Close()
+	if err := ws.WriteMessage(websocket.TextMessage, []byte("hello")); err != nil {
+		t.Fatalf("%v", err)
+	}
+}
+
+// func TestGameRun(t *testing.T) {
+
+// }
