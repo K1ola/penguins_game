@@ -34,4 +34,5 @@ type RoomState struct {
 	Gun  *GunState
 	Fishes 	map[int]*FishState
 	CurrentTime time.Time
+	Round int
 }

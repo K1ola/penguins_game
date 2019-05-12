@@ -11,6 +11,7 @@ type OutPayloadMessage struct {
 	Penguin PenguinMessage `json:"penguin"`
 	Gun GunMessage `json:"gun"`
 	PiscesCount uint `json:"PiscesCount"`
+	Round uint `json:"round"`
 }
 
 type PenguinMessage struct {
@@ -23,11 +24,11 @@ type PenguinMessage struct {
 
 type GunMessage struct {
 	Name string `json:"name"`
-	Bullet BulletMessage `json:"bullet"`
+	Clockwise bool `json:"clockwise"`
 	Alpha int `json:"alpha"`
 	Result string `json:"result"`
 	Score uint `json:"score"`
-	Clockwise bool `json:"clockwise"`
+	Bullet BulletMessage `json:"bullet"`
 }
 
 type BulletMessage struct {

@@ -73,6 +73,9 @@ func (p *Player) Listen() {
 					//TODO select game mode
 					p.roomMulti.ProcessCommand(message)
 
+				case NEWROUND:
+					//start new Round
+					p.roomMulti.StartNewRound()
 				default:
 					fmt.Println("Default in Player.Listen() - in")
 			}
@@ -81,19 +84,23 @@ func (p *Player) Listen() {
 			fmt.Printf("Back says: %#v", message)
 			fmt.Println("")
 			//шлем всем фронтам текущее состояние
-			switch message.Type {
+			if message != nil {
+				switch message.Type {
 				case START:
 					fmt.Println("Process START")
 				case WAIT:
 					fmt.Println("Process WAIT")
-				case FINISH:
-					fmt.Println("Process FINISH")
+				case FINISHROUND:
+					fmt.Println("Process FINISH ROUND")
+				case FINISHGAME:
+					fmt.Println("Process FINISH GAME")
 				case STATE:
 					fmt.Println("Process STATE")
 				default:
 					fmt.Println("Default in Player.Listen() - out")
+				}
+				_ = p.conn.WriteJSON(message)
 			}
-			_ = p.conn.WriteJSON(message)
 		}
 	}
 }
@@ -107,13 +114,23 @@ func (p *Player) RemovePlayerFromRoom() {
 	}
 }
 
-func (p *Player) Finish() {
+func (p *Player) FinishGame() {
 	if p.roomSingle != nil {
 		//TODO finish single
 		//p.roomSingle.(p)
 	}
 	if p.roomMulti != nil {
-		p.roomMulti.FinishGame(p)
+		p.roomMulti.FinishGame()
+	}
+}
+
+func (p *Player) FinishRound() {
+	if p.roomSingle != nil {
+		//TODO finish single
+		//p.roomSingle.(p)
+	}
+	if p.roomMulti != nil {
+		p.roomMulti.FinishRound(p)
 	}
 }
 

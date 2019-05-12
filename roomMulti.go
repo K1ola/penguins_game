@@ -16,7 +16,8 @@ type RoomMulti struct {
 	unregister chan *Player
 	ticker     *time.Ticker
 	state      *RoomState
-	gameState string
+	gameState string	//START, FINISH
+	round int
 
 	broadcast chan *OutcomeMessage
 	finish chan *Player
@@ -28,12 +29,14 @@ func NewRoomMulti(MaxPlayers uint) *RoomMulti {
 		Players:    make(map[string]*Player),
 		register:   make(chan *Player),
 		unregister: make(chan *Player),
-		ticker:     time.NewTicker(1 * time.Second),
+		ticker:     time.NewTicker(100 * time.Millisecond),
 		state: &RoomState{
 			Penguin: new(PenguinState),
 			Gun: new(GunState),
 			Fishes: make(map[int]*FishState, 24),
+			Round: -1,
 		},
+		round: -1,
 		broadcast: make(chan *OutcomeMessage),
 		finish: make(chan *Player),
 	}
@@ -55,23 +58,69 @@ func (r *RoomMulti) Run() {
 			r.mu.Unlock()
 			LogMsg("Player " + player.ID + " joined")
 			if len(r.Players) == 2 {
-				penguin, gun := r.SelectPlayersRoles()
-				message := &OutcomeMessage{
-					Type: START,
-					Payload: OutPayloadMessage{
-						Gun: GunMessage{
-							Name: gun,
-						},
-						Penguin: PenguinMessage{
-							Name: penguin,
-						},
-						PiscesCount: 24,
-					},
-				}
-				r.gameState = START
-				r.SendRoomState(message)
-				r.state = CreateInitialState(r)
-				//panic("PANIC")
+				//if r.state != nil && r.round < 2 {
+				//	penguin, gun := r.SelectPlayersRoles()
+				//	message := &OutcomeMessage{
+				//		Type: START,
+				//		Payload: OutPayloadMessage{
+				//			Gun: GunMessage{
+				//				Name: gun,
+				//			},
+				//			Penguin: PenguinMessage{
+				//				Name: penguin,
+				//			},
+				//			PiscesCount: 24,
+				//		},
+				//	}
+				//	r.gameState = START
+				//	r.SendRoomState(message)
+				//	r.state = CreateInitialState(r)
+					r.StartNewRound()
+				//} else {
+				//	if r.round >= 2 {
+				//		r.gameState = FINISHGAME
+				//		if r.state.Penguin.Score > r.state.Gun.Score {
+				//			message := &OutcomeMessage{
+				//				Type:FINISHGAME,
+				//				Payload:OutPayloadMessage{
+				//					Penguin:PenguinMessage{
+				//						Name: r.state.Penguin.ID,
+				//						Score: uint(r.state.Penguin.Score),
+				//						Result:WIN,
+				//					},
+				//					Gun:GunMessage{
+				//						Name: r.state.Gun.ID,
+				//						Score: uint(r.state.Gun.Score),
+				//						Result:LOST,
+				//					},
+				//				},
+				//			}
+				//
+				//			r.SendRoomState(message)
+				//			r.gameState = FINISHGAME
+				//		} else {
+				//			message := &OutcomeMessage{
+				//				Type:FINISHGAME,
+				//				Payload:OutPayloadMessage{
+				//					Penguin:PenguinMessage{
+				//						Name: r.state.Penguin.ID,
+				//						Score: uint(r.state.Penguin.Score),
+				//						Result:LOST,
+				//					},
+				//					Gun:GunMessage{
+				//						Name: r.state.Gun.ID,
+				//						Score: uint(r.state.Gun.Score),
+				//						Result:WIN,
+				//					},
+				//				},
+				//			}
+				//
+				//			r.SendRoomState(message)
+				//			r.gameState = FINISHGAME
+				//		}
+						//send FINISH_GAME
+					//}
+				//}
 			}
 		case message := <- r.broadcast:
 			r.SendRoomState(message)
@@ -79,7 +128,10 @@ func (r *RoomMulti) Run() {
 			if r.gameState == START {
 				  message := RunMulti(r)
 				  if message.Type != STATE {
-				  	r.gameState = FINISH
+				  	//r.gameState = FINISHROUND //r.gameState = FINISHGAME ?
+				  	if r.gameState == FINISHGAME {
+				  		r.FinishGame()
+					}
 				  }
 				  r.SendRoomState(message)
 			}
@@ -145,11 +197,61 @@ func (r *RoomMulti) ProcessCommand(message *IncomeMessage) {
 	}
 }
 
-func (r *RoomMulti) FinishGame(player *Player) {
+func (r *RoomMulti) FinishGame() {
 	//r.finish <- player
-	LogMsg("Player " + player.ID + " finished game")
+	for _, player := range r.Players {
+		LogMsg("Player " + player.ID + " finished game")
+	}
+	r.gameState = FINISHGAME
+	if r.state.Penguin.Score > r.state.Gun.Score {
+		message := &OutcomeMessage{
+			Type: FINISHGAME,
+			Payload: OutPayloadMessage{
+				Penguin: PenguinMessage{
+					Name:   r.state.Penguin.ID,
+					Score:  uint(r.state.Penguin.Score),
+					Result: WIN,
+				},
+				Gun: GunMessage{
+					Name:   r.state.Gun.ID,
+					Score:  uint(r.state.Gun.Score),
+					Result: LOST,
+				},
+			},
+		}
+
+		r.SendRoomState(message)
+		r.gameState = FINISHGAME
+	} else {
+		message := &OutcomeMessage{
+			Type: FINISHGAME,
+			Payload: OutPayloadMessage{
+				Penguin: PenguinMessage{
+					Name:   r.state.Penguin.ID,
+					Score:  uint(r.state.Penguin.Score),
+					Result: LOST,
+				},
+				Gun: GunMessage{
+					Name:   r.state.Gun.ID,
+					Score:  uint(r.state.Gun.Score),
+					Result: WIN,
+				},
+			},
+		}
+		r.SendRoomState(message)
+		r.gameState = FINISHGAME
+	}
 	r.state.Penguin = nil
 	r.state.Gun = nil
+}
+
+func (r *RoomMulti) FinishRound(player *Player) {
+	//r.finish <- player
+	LogMsg("Player " + player.ID + " finished round")
+	//r.round += 1
+	//r.state.Round = r.round
+	//r.state.Penguin = nil
+	//r.state.Gun = nil
 }
 
 func (r *RoomMulti) SendRoomState(message *OutcomeMessage) {
@@ -162,3 +264,72 @@ func (r *RoomMulti) SendRoomState(message *OutcomeMessage) {
 	}
 }
 
+func (r *RoomMulti) StartNewRound() {
+
+	if r.state != nil && r.round < 2 {
+		penguin, gun := r.SelectPlayersRoles()
+		message := &OutcomeMessage{
+			Type: START,
+			Payload: OutPayloadMessage{
+				Gun: GunMessage{
+					Name: gun,
+				},
+				Penguin: PenguinMessage{
+					Name: penguin,
+				},
+				PiscesCount: 24,
+				Round:       uint(r.round),
+			},
+		}
+		r.gameState = START
+		r.SendRoomState(message)
+		r.state = CreateInitialState(r)
+	} else {
+		if r.round > 1 {
+			//r.gameState = FINISHGAME
+			//if r.state.Penguin.Score > r.state.Gun.Score {
+			//	message := &OutcomeMessage{
+			//		Type: FINISHGAME,
+			//		Payload: OutPayloadMessage{
+			//			Penguin: PenguinMessage{
+			//				Name:   r.state.Penguin.ID,
+			//				Score:  uint(r.state.Penguin.Score),
+			//				Result: WIN,
+			//			},
+			//			Gun: GunMessage{
+			//				Name:   r.state.Gun.ID,
+			//				Score:  uint(r.state.Gun.Score),
+			//				Result: LOST,
+			//			},
+			//		},
+			//	}
+			//
+			//	r.SendRoomState(message)
+			//	r.gameState = FINISHGAME
+			//} else {
+			//	message := &OutcomeMessage{
+			//		Type: FINISHGAME,
+			//		Payload: OutPayloadMessage{
+			//			Penguin: PenguinMessage{
+			//				Name:   r.state.Penguin.ID,
+			//				Score:  uint(r.state.Penguin.Score),
+			//				Result: LOST,
+			//			},
+			//			Gun: GunMessage{
+			//				Name:   r.state.Gun.ID,
+			//				Score:  uint(r.state.Gun.Score),
+			//				Result: WIN,
+			//			},
+			//		},
+			//	}
+			//
+			//	r.SendRoomState(message)
+			//	r.gameState = FINISHGAME
+			//}
+			r.FinishGame()
+		}
+	}
+
+	r.round += 1
+	r.state.Round = r.round
+}

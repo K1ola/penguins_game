@@ -57,7 +57,7 @@ func (r *RoomSingle) Run() {
 			//ProcessGameSingle(r)
 		case player := <- r.finish:
 			LogMsg("Player " + player.ID + " finished game")
-			player.out <- &OutcomeMessage{Type:FINISH}
+			player.out <- &OutcomeMessage{Type:FINISHGAME}
 			r.state.Penguin = nil
 			//FinishGame(r)
 		}

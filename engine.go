@@ -184,7 +184,10 @@ func RunMulti(room *RoomMulti) *OutcomeMessage {
 	if msg != nil {
 		for _, player := range room.Players {
 			//TODO
-			room.FinishGame(player)
+			//room.FinishGame(player)
+			//room.round += 1
+			//room.state.Round = room.round
+			player.FinishRound()
 		}
 		return msg
 	}
@@ -193,7 +196,9 @@ func RunMulti(room *RoomMulti) *OutcomeMessage {
 	if msg != nil {
 		for _, player := range room.Players {
 			//room.FinishGame(player)
-			player.Finish()
+			//room.round += 1
+			//room.state.Round = room.round
+			player.FinishRound()
 		}
 		return msg
 	}
@@ -213,6 +218,7 @@ func CreateInitialState(room *RoomMulti) *RoomState {
 	state.Penguin = CreatePenguin(penguin)
 	state.Gun = CreateGun(gun)
 	state.Fishes = CreateFishes()
+	state.Round = room.round
 	room.state = state
 	return state
 }
@@ -238,19 +244,19 @@ func (rs *RoomState) RecalcBullet() *OutcomeMessage{
 	if rs.Gun.Bullet.DistanceFromCenter > 100*0.8/2 {
 		if rs.Gun.Bullet.Alpha % 360 >= rs.Penguin.Alpha - 7 && rs.Gun.Bullet.Alpha % 360 <= rs.Penguin.Alpha + 7 {
 			//lost
+			scoreGun := rs.Gun.Score + 1
 			return &OutcomeMessage{
-				Type:FINISH,
+				Type:FINISHROUND,
 				Payload:OutPayloadMessage{
 					Penguin:PenguinMessage{
 						Name: rs.Penguin.ID,
 						Score: uint(rs.Penguin.Score),
-						Result:LOST,
 					},
 					Gun:GunMessage{
 						Name: rs.Gun.ID,
-						Score: uint(rs.Gun.Score),
-						Result:WIN,
+						Score: uint(scoreGun),
 					},
+					Round: uint(rs.Round),
 				}}
 		}
 
@@ -289,7 +295,7 @@ func (rs *RoomState) RecalcPenguin() *OutcomeMessage{
 
 		for i := 0; i < len(rs.Fishes); i++ {
 			if rs.Penguin.Alpha == rs.Fishes[i].Alpha {
-				rs.Penguin.Score ++
+				//rs.Penguin.Score ++
 
 				rs.Fishes[i].Eaten = true
 				break
@@ -305,19 +311,19 @@ func (rs *RoomState) RecalcPenguin() *OutcomeMessage{
 
 		if count == 0 {
 			// win penguin
+			scorePenguin := rs.Penguin.Score + 1
 			return &OutcomeMessage{
-				Type:FINISH,
+				Type:FINISHROUND,
 				Payload:OutPayloadMessage{
 					Penguin:PenguinMessage{
 						Name: rs.Penguin.ID,
-						Score: uint(rs.Penguin.Score),
-						Result:WIN,
+						Score: uint(scorePenguin),
 					},
 					Gun:GunMessage{
 						Name: rs.Gun.ID,
 						Score: uint(rs.Gun.Score),
-						Result:LOST,
 					},
+					Round: uint(rs.Round),
 				}}
 		}
 
@@ -352,6 +358,7 @@ func (rs *RoomState) GetState() *OutcomeMessage {
 				Clockwise: rs.Gun.ClockwiseDirection,
 			},
 			PiscesCount: 24,
+			Round: uint(rs.Round),
 		},
 	}
 }
