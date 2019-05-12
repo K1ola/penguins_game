@@ -558,3 +558,28 @@ func TestRecalcBullet(t *testing.T) {
 	rs.Gun.Bullet.DistanceFromCenter = 2000
 	rs.RecalcBullet()
 }
+
+func TestPlayer8(t *testing.T) {
+	s := httptest.NewServer(http.HandlerFunc(StartSingle))
+	defer s.Close()
+
+	u := "ws" + strings.TrimPrefix(s.URL, "http")
+
+	// Connect to the server
+	ws, _, err := websocket.DefaultDialer.Dial(u, nil)
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	defer ws.Close()
+
+	incomeMessage := new(IncomeMessage)
+
+	incomeMessage.Type = "newCommand"
+	incomeMessage.Payload.Name = "user6"
+	incomeMessage.Payload.Mode = "MULTI"
+
+	if err := ws.WriteJSON(incomeMessage); err != nil {
+		t.Fatalf("%v", err)
+	}
+
+}
