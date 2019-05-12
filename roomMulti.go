@@ -16,10 +16,10 @@ type RoomMulti struct {
 	unregister chan *Player
 	ticker     *time.Ticker
 	state      *RoomState
-	gameState string
+	gameState  string
 
 	broadcast chan *OutcomeMessage
-	finish chan *Player
+	finish    chan *Player
 }
 
 func NewRoomMulti(MaxPlayers uint) *RoomMulti {
@@ -31,11 +31,11 @@ func NewRoomMulti(MaxPlayers uint) *RoomMulti {
 		ticker:     time.NewTicker(1 * time.Second),
 		state: &RoomState{
 			Penguin: new(PenguinState),
-			Gun: new(GunState),
-			Fishes: make(map[int]*FishState, 24),
+			Gun:     new(GunState),
+			Fishes:  make(map[int]*FishState, 24),
 		},
 		broadcast: make(chan *OutcomeMessage),
-		finish: make(chan *Player),
+		finish:    make(chan *Player),
 	}
 }
 
@@ -73,20 +73,20 @@ func (r *RoomMulti) Run() {
 				r.state = CreateInitialState(r)
 				//panic("PANIC")
 			}
-		case message := <- r.broadcast:
+		case message := <-r.broadcast:
 			r.SendRoomState(message)
 		case <-r.ticker.C:
 			if r.gameState == START {
-				  message := RunMulti(r)
-				  if message.Type != STATE {
-				  	r.gameState = FINISH
-				  }
-				  r.SendRoomState(message)
+				message := RunMulti(r)
+				if message.Type != STATE {
+					r.gameState = FINISH
+				}
+				r.SendRoomState(message)
 			}
-		//case player := <- r.finish:
-		//	LogMsg("Player " + player.ID + " finished game")
-		//	r.state.Penguin = nil
-		//	r.state.Gun = nil
+			//case player := <- r.finish:
+			//	LogMsg("Player " + player.ID + " finished game")
+			//	r.state.Penguin = nil
+			//	r.state.Gun = nil
 		}
 	}
 }
@@ -96,7 +96,7 @@ func (r *RoomMulti) AddPlayer(player *Player) {
 		ID:                 player.ID,
 		Alpha:              0,
 		ClockwiseDirection: true,
-		Score:				0,
+		Score:              0,
 	}
 	r.mu.Lock()
 	r.state.Penguin = ps
@@ -161,4 +161,3 @@ func (r *RoomMulti) SendRoomState(message *OutcomeMessage) {
 		}
 	}
 }
-
