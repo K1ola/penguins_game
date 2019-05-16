@@ -131,8 +131,6 @@ func (r *RoomMulti) Run() {
 					  case FINISHROUND:
 					  		fmt.Println(FINISHROUND)
 					  		fmt.Println(r.gameState)
-						    //r.SendRoomState(&OutcomeMessage{Type: WAIT})
-						    //return
 					  case FINISHGAME:
 							message = r.FinishGame()
 					  }
@@ -256,6 +254,12 @@ func (r *RoomMulti) FinishRound() {
 		helpers.LogMsg("Player " + player.ID + " finished round")
 	}
 	r.gameState = WAITING
+	if r.round == 2 {
+			r.gameState = FINISHED
+			//message := r.FinishGame()
+			//r.SendRoomState(message)
+			//r.gameState = FINISHED
+	}
 }
 
 func (r *RoomMulti) SendRoomState(message *OutcomeMessage) {
@@ -296,6 +300,7 @@ func (r *RoomMulti) StartNewRound() {
 		if r.round == 2 {
 			message := r.FinishGame()
 			r.SendRoomState(message)
+			//r.gameState = FINISHED
 		}
 	}
 }
