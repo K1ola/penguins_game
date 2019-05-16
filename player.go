@@ -78,6 +78,7 @@ func (p *Player) Listen() {
 
 				case NEWROUND:
 					if p.roomMulti.gameState == WAITING {
+						fmt.Println(p.roomMulti)
 						p.roomMulti.SendRoomState(&OutcomeMessage{Type: WAIT})
 						p.roomMulti.gameState = INITIALIZED
 						continue

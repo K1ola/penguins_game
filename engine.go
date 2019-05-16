@@ -9,7 +9,7 @@ func CreatePenguin(id string) *PenguinState {
 		ID: id,
 		Result: "",
 		Alpha: rand.Intn(360),
-		Score: 0,
+		//Score: 0,
 		ClockwiseDirection: true,
 	}
 }
@@ -19,7 +19,7 @@ func CreateGun(id string) *GunState {
 		ID: id,
 		Result: "",
 		Alpha: rand.Intn(360),
-		Score: 0,
+		//Score: 0,
 		ClockwiseDirection: true,
 		Bullet: CreateBullet(),
 	}
@@ -179,18 +179,12 @@ func CreateFishes() map[int]*FishState {
 func RunMulti(room *RoomMulti) *OutcomeMessage {
 	msg := room.state.RecalcPenguin()
 	if msg != nil {
-		//for _, player := range room.Players {
-		//	player.FinishRound()
-		//}
 		room.FinishRound()
 		return msg
 	}
 	room.state.RecalcGun()
 	msg = room.state.RecalcBullet()
 	if msg != nil {
-		//for _, player := range room.Players {
-		//	player.FinishRound()
-		//}
 		room.FinishRound()
 		return msg
 	}
@@ -211,7 +205,14 @@ func CreateInitialState(room *RoomMulti) *RoomState {
 	state.Gun = CreateGun(gun)
 	state.Fishes = CreateFishes()
 	state.Round = room.round
+	var penguinScore, gunScore int
+	if room.state != nil {
+		penguinScore = room.state.Penguin.Score
+		gunScore = room.state.Gun.Score
+	}
 	room.state = state
+	room.state.Penguin.Score = penguinScore
+	room.state.Gun.Score = gunScore
 	return state
 }
 
@@ -237,6 +238,7 @@ func (rs *RoomState) RecalcBullet() *OutcomeMessage{
 		if rs.Gun.Bullet.Alpha % 360 >= rs.Penguin.Alpha - 7 && rs.Gun.Bullet.Alpha % 360 <= rs.Penguin.Alpha + 7 {
 			//lost
 			scoreGun := rs.Gun.Score + 1
+			rs.Gun.Score = scoreGun
 			return &OutcomeMessage{
 				Type:FINISHROUND,
 				Payload:OutPayloadMessage{
@@ -304,6 +306,7 @@ func (rs *RoomState) RecalcPenguin() *OutcomeMessage{
 		if count == 0 {
 			// win penguin
 			scorePenguin := rs.Penguin.Score + 1
+			rs.Penguin.Score = scorePenguin
 			return &OutcomeMessage{
 				Type:FINISHROUND,
 				Payload:OutPayloadMessage{
