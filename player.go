@@ -12,6 +12,7 @@ import (
 type Player struct {
 	conn *websocket.Conn
 	ID   string
+	game *Game
 	in   chan *IncomeMessage
 	out  chan *OutcomeMessage
 	roomSingle *RoomSingle
@@ -25,6 +26,7 @@ func NewPlayer(conn *websocket.Conn, id string) *Player {
 	return &Player{
 		conn: conn,
 		ID:   id,
+		game: PingGame,
 		in:   make(chan *IncomeMessage),
 		out:  make(chan *OutcomeMessage, 1),
 		roomMulti: nil,
@@ -45,6 +47,7 @@ func (p *Player) Listen() {
 			fmt.Println("ReadJSON error: ", err)
 			if websocket.IsUnexpectedCloseError(err) {
 				p.RemovePlayerFromRoom()
+				p.RemovePlayerFromGame()
 				helpers.LogMsg("Player " + p.ID +" disconnected")
 				metrics.PlayersCountInGame.Dec()
 				return
@@ -120,6 +123,10 @@ func (p *Player) RemovePlayerFromRoom() {
 	if p.roomMulti != nil {
 		p.roomMulti.RemovePlayer(p)
 	}
+}
+
+func (p *Player) RemovePlayerFromGame() {
+	p.game.unregister <- p
 }
 
 func (p *Player) FinishGame() {

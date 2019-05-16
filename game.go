@@ -14,10 +14,6 @@ var maxRooms uint
 func InitGame(rooms uint) *Game {
 	maxRooms = rooms
 	game :=  NewGame(maxRooms)
-	//for i := 0; i < 10; i++ {
-	//	//game.roomsSingle[i].gameState = INITIALIZED
-	//	game.roomsMulti[i].gameState = INITIALIZED
-	//}
 	return game
 }
 
@@ -55,9 +51,9 @@ func (g *Game) Run() {
 				default:
 					fmt.Println("Empty")
 				}
-		case <-g.unregister:
-			//remove from rooms
-			//(do mot forget to free pointers - use same logic as with players)
+		case player, _ := <-g.unregister:
+			delete(g.Players, player.ID)
+			helpers.LogMsg("Player " + player.ID + " was removed from PingGame")
 		}
 
 	}
@@ -165,22 +161,7 @@ func (g *Game) ProcessMulti(player *Player) {
 			penguin, gun := room.SelectPlayersRoles()
 			room.state.Penguin.ID = penguin
 			room.state.Gun.ID = gun
-			//message := &OutcomeMessage{
-			//	Type: START,
-			//	Payload: OutPayloadMessage{
-			//		Gun: GunMessage{
-			//			Name: gun,
-			//		},
-			//		Penguin: PenguinMessage{
-			//			Name: penguin,
-			//		},
-			//		PiscesCount: 24,
-			//	},
-			//}
-			//room.SendRoomState(message)
 			room.StartNewRound()
-
-			//room.gameState = RUNNING
 			//continue LOOP
 			return
 		}

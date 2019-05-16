@@ -140,12 +140,9 @@ func (r *RoomMulti) Run() {
 					message := r.FinishGame()
 					r.SendRoomState(message)
 					//r.gameState = FINISHED
+					return
 				}
 			}
-		//case player := <- r.finish:
-		//	LogMsg("Player " + player.ID + " finished game")
-		//	r.state.Penguin = nil
-		//	r.state.Gun = nil
 		}
 	}
 }
@@ -165,7 +162,9 @@ func (r *RoomMulti) AddPlayer(player *Player) {
 }
 
 func (r *RoomMulti) RemovePlayer(player *Player) {
-	r.unregister <- player
+	//r.unregister <- player
+	delete(r.Players, player.ID)
+	helpers.LogMsg("Player " + player.ID + " was removed from room")
 }
 
 func (r *RoomMulti) SelectPlayersRoles() (string, string) {
@@ -205,9 +204,7 @@ func (r *RoomMulti) ProcessCommand(message *IncomeMessage) {
 }
 
 func (r *RoomMulti) FinishGame() *OutcomeMessage {
-	//r.finish <- player
 	for _, player := range r.Players {
-		//player.Playing = false
 		helpers.LogMsg("Player " + player.ID + " finished game")
 	}
 	//r.gameState = FINISHED
@@ -251,7 +248,6 @@ func (r *RoomMulti) FinishGame() *OutcomeMessage {
 	}
 	//r.state.Penguin = nil
 	//r.state.Gun = nil
-
 }
 
 func (r *RoomMulti) FinishRound() {
@@ -261,9 +257,6 @@ func (r *RoomMulti) FinishRound() {
 	r.gameState = WAITING
 	if r.round == 2 {
 			r.gameState = FINISHED
-			//message := r.FinishGame()
-			//r.SendRoomState(message)
-			//r.gameState = FINISHED
 	}
 }
 
@@ -278,9 +271,6 @@ func (r *RoomMulti) SendRoomState(message *OutcomeMessage) {
 }
 
 func (r *RoomMulti) StartNewRound() {
-	//for _, player := range r.Players {
-	//	player.Playing = true
-	//}
 	if r.state != nil && r.round < 2 {
 		r.round += 1
 		r.state.Round = r.round
