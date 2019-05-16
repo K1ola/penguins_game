@@ -9,7 +9,7 @@ import (
 )
 
 type RoomMulti struct {
-	ID         string
+	ID         int
 	MaxPlayers uint
 	Players    map[string]*Player
 	mu         sync.Mutex
@@ -24,8 +24,9 @@ type RoomMulti struct {
 	finish chan *Player
 }
 
-func NewRoomMulti(MaxPlayers uint) *RoomMulti {
+func NewRoomMulti(MaxPlayers uint, id int) *RoomMulti {
 	return &RoomMulti{
+		ID: id,
 		MaxPlayers: MaxPlayers,
 		Players:    make(map[string]*Player),
 		register:   make(chan *Player),
@@ -271,6 +272,7 @@ func (r *RoomMulti) SendRoomState(message *OutcomeMessage) {
 }
 
 func (r *RoomMulti) StartNewRound() {
+	time.Sleep(500 * time.Millisecond)
 	if r.state != nil && r.round < 2 {
 		r.round += 1
 		r.state.Round = r.round

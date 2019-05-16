@@ -10,6 +10,8 @@ import (
 
 var PingGame *Game
 var maxRooms uint
+var SingleRoomsCount int
+var MultiRoomsCount int
 
 func InitGame(rooms uint) *Game {
 	maxRooms = rooms
@@ -19,8 +21,8 @@ func InitGame(rooms uint) *Game {
 
 type Game struct {
 	MaxRooms    uint
-	roomsSingle []*RoomSingle
-	roomsMulti  []*RoomMulti
+	roomsSingle map[int]*RoomSingle
+	roomsMulti  map[int]*RoomMulti
 	mu       sync.RWMutex
 	register chan *Player
 	unregister chan *Player
@@ -32,12 +34,14 @@ func NewGame(maxRooms uint) *Game {
 		MaxRooms: maxRooms,
 		register: make(chan *Player),
 		unregister: make(chan *Player),
+		roomsSingle: make(map[int]*RoomSingle),
+		roomsMulti:  make(map[int]*RoomMulti),
 		Players:    make(map[string]*Player),
 	}
 }
 
 func (g *Game) Run() {
-	defer helpers.RecoverPanic()
+	//defer helpers.RecoverPanic()
 //LOOP:
 	for {
 		select {
@@ -53,6 +57,12 @@ func (g *Game) Run() {
 				}
 		case player, _ := <-g.unregister:
 			delete(g.Players, player.ID)
+			for _, room := range g.roomsMulti {
+				fmt.Println(len(room.Players))
+				if room != nil && len(room.Players) == 0 {
+					delete(g.roomsMulti, room.ID)
+				}
+			}
 			helpers.LogMsg("Player " + player.ID + " was removed from PingGame")
 		}
 
@@ -61,12 +71,16 @@ func (g *Game) Run() {
 
 func (g *Game) AddToRoomSingle(room *RoomSingle) {
 	metrics.ActiveRooms.Inc()
-	g.roomsSingle = append(g.roomsSingle, room)
+	g.roomsSingle[SingleRoomsCount] = room
+	SingleRoomsCount++
+	//g.roomsSingle = append(g.roomsSingle, room)
 }
 
 func (g *Game) AddToRoomMulti(room *RoomMulti) {
 	metrics.ActiveRooms.Inc()
-	g.roomsMulti = append(g.roomsMulti, room)
+	g.roomsMulti[MultiRoomsCount] = room
+	MultiRoomsCount++
+	//g.roomsMulti = append(g.roomsMulti, room)
 }
 
 func (g *Game) AddPlayer(player *Player) {
@@ -167,7 +181,7 @@ func (g *Game) ProcessMulti(player *Player) {
 		}
 	}
 	//если все комнаты заняты - делой новую
-	room := NewRoomMulti(2)
+	room := NewRoomMulti(2, SingleRoomsCount)
 	g.mu.Lock()
 	g.AddToRoomMulti(room)
 	g.mu.Unlock()
