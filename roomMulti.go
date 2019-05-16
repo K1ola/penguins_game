@@ -136,6 +136,11 @@ func (r *RoomMulti) Run() {
 					  }
 				  }
 				  r.SendRoomState(message)
+				if r.round == 2 && r.gameState == FINISHED {
+					message := r.FinishGame()
+					r.SendRoomState(message)
+					//r.gameState = FINISHED
+				}
 			}
 		//case player := <- r.finish:
 		//	LogMsg("Player " + player.ID + " finished game")
