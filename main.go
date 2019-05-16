@@ -63,7 +63,7 @@ func main() {
 	gameRouter.HandleFunc("/single", StartSingle)
 	gameRouter.HandleFunc("/multi", StartMulti)
 
-	LogMsg("GameServer started at", port)
+	helpers.LogMsg("GameServer started at", port)
 
 	http.ListenAndServe(port, handlers.LoggingHandler(os.Stdout, router))
 }

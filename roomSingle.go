@@ -1,6 +1,7 @@
 package main
 
 import (
+	"game/helpers"
 	//"game/helpers"
 	"sync"
 	"time"
@@ -38,25 +39,25 @@ func NewRoomSingle(MaxPlayers uint) *RoomSingle {
 
 func (r *RoomSingle) Run() {
 	//defer helpers.RecoverPanic()
-	LogMsg("Room Single loop started")
+	helpers.LogMsg("Room Single loop started")
 	//r.state.Gun.Bullet = CreateBullet(r)
 	//GameInit(r)
 	for {
 		select {
 		case player := <-r.unregister:
 			r.Player = nil
-			LogMsg("Player " + player.ID + " was removed from room")
+			helpers.LogMsg("Player " + player.ID + " was removed from room")
 		case player := <-r.register:
 			r.mu.Lock()
 			r.Player = player
 			r.mu.Unlock()
-			LogMsg("Player " + player.ID + " joined")
+			helpers.LogMsg("Player " + player.ID + " joined")
 			//r.Player.out <- &OutcomeMessage{Type:START}
 		case <-r.ticker.C:
 			r.broadcast <- &OutcomeMessage{Type:STATE}
 			//ProcessGameSingle(r)
 		case player := <- r.finish:
-			LogMsg("Player " + player.ID + " finished game")
+			helpers.LogMsg("Player " + player.ID + " finished game")
 			player.out <- &OutcomeMessage{Type:FINISHGAME}
 			r.state.Penguin = nil
 			//FinishGame(r)

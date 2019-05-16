@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"game/helpers"
 	"math/rand"
 	"sync"
 	"time"
@@ -16,7 +17,7 @@ type RoomMulti struct {
 	unregister chan *Player
 	ticker     *time.Ticker
 	state      *RoomState
-	gameState string	//START, FINISH
+	gameState GameCurrentState
 	round int
 
 	broadcast chan *OutcomeMessage
@@ -44,20 +45,18 @@ func NewRoomMulti(MaxPlayers uint) *RoomMulti {
 
 func (r *RoomMulti) Run() {
 	//defer helpers.RecoverPanic()
-	LogMsg("Room Multi loop started")
-	//r.state.Gun.Bullet = CreateBullet(r)
-	//GameInit(r)
+	helpers.LogMsg("Room Multi loop started")
 	for {
 		select {
 		case player := <-r.unregister:
 			delete(r.Players, player.ID)
-			LogMsg("Player " + player.ID + " was removed from room")
+			helpers.LogMsg("Player " + player.ID + " was removed from room")
 		case player := <-r.register:
 			r.mu.Lock()
 			r.Players[player.ID] = player
 			r.mu.Unlock()
-			LogMsg("Player " + player.ID + " joined")
-			if len(r.Players) == 2 {
+			helpers.LogMsg("Player " + player.ID + " joined")
+			//if len(r.Players) == 2 {
 				//if r.state != nil && r.round < 2 {
 				//	penguin, gun := r.SelectPlayersRoles()
 				//	message := &OutcomeMessage{
@@ -75,7 +74,7 @@ func (r *RoomMulti) Run() {
 				//	r.gameState = START
 				//	r.SendRoomState(message)
 				//	r.state = CreateInitialState(r)
-					r.StartNewRound()
+					//r.StartNewRound()
 				//} else {
 				//	if r.round >= 2 {
 				//		r.gameState = FINISHGAME
@@ -121,17 +120,22 @@ func (r *RoomMulti) Run() {
 						//send FINISH_GAME
 					//}
 				//}
-			}
+			//}
 		case message := <- r.broadcast:
 			r.SendRoomState(message)
 		case <-r.ticker.C:
-			if r.gameState == START {
+			if r.gameState == RUNNING {
 				  message := RunMulti(r)
 				  if message.Type != STATE {
-				  	//r.gameState = FINISHROUND //r.gameState = FINISHGAME ?
-				  	if r.gameState == FINISHGAME {
-				  		r.FinishGame()
-					}
+					  switch message.Type {
+					  case FINISHROUND:
+					  		fmt.Println(FINISHROUND)
+					  		fmt.Println(r.gameState)
+						    //r.SendRoomState(&OutcomeMessage{Type: WAIT})
+						    //return
+					  case FINISHGAME:
+							message = r.FinishGame()
+					  }
 				  }
 				  r.SendRoomState(message)
 			}
@@ -197,12 +201,13 @@ func (r *RoomMulti) ProcessCommand(message *IncomeMessage) {
 	}
 }
 
-func (r *RoomMulti) FinishGame() {
+func (r *RoomMulti) FinishGame() *OutcomeMessage {
 	//r.finish <- player
 	for _, player := range r.Players {
-		LogMsg("Player " + player.ID + " finished game")
+		//player.Playing = false
+		helpers.LogMsg("Player " + player.ID + " finished game")
 	}
-	r.gameState = FINISHGAME
+	//r.gameState = FINISHED
 	if r.state.Penguin.Score > r.state.Gun.Score {
 		message := &OutcomeMessage{
 			Type: FINISHGAME,
@@ -220,8 +225,8 @@ func (r *RoomMulti) FinishGame() {
 			},
 		}
 
-		r.SendRoomState(message)
-		r.gameState = FINISHGAME
+		r.gameState = FINISHED
+		return message
 	} else {
 		message := &OutcomeMessage{
 			Type: FINISHGAME,
@@ -238,20 +243,19 @@ func (r *RoomMulti) FinishGame() {
 				},
 			},
 		}
-		r.SendRoomState(message)
-		r.gameState = FINISHGAME
+		r.gameState = FINISHED
+		return message
 	}
-	r.state.Penguin = nil
-	r.state.Gun = nil
-}
-
-func (r *RoomMulti) FinishRound(player *Player) {
-	//r.finish <- player
-	LogMsg("Player " + player.ID + " finished round")
-	//r.round += 1
-	//r.state.Round = r.round
 	//r.state.Penguin = nil
 	//r.state.Gun = nil
+
+}
+
+func (r *RoomMulti) FinishRound() {
+	for _, player := range r.Players {
+		helpers.LogMsg("Player " + player.ID + " finished round")
+	}
+	r.gameState = WAITING
 }
 
 func (r *RoomMulti) SendRoomState(message *OutcomeMessage) {
@@ -265,8 +269,12 @@ func (r *RoomMulti) SendRoomState(message *OutcomeMessage) {
 }
 
 func (r *RoomMulti) StartNewRound() {
-
+	//for _, player := range r.Players {
+	//	player.Playing = true
+	//}
 	if r.state != nil && r.round < 2 {
+		r.round += 1
+		r.state.Round = r.round
 		penguin, gun := r.SelectPlayersRoles()
 		message := &OutcomeMessage{
 			Type: START,
@@ -281,55 +289,13 @@ func (r *RoomMulti) StartNewRound() {
 				Round:       uint(r.round),
 			},
 		}
-		r.gameState = START
 		r.SendRoomState(message)
 		r.state = CreateInitialState(r)
+		r.gameState = RUNNING
 	} else {
-		if r.round > 1 {
-			//r.gameState = FINISHGAME
-			//if r.state.Penguin.Score > r.state.Gun.Score {
-			//	message := &OutcomeMessage{
-			//		Type: FINISHGAME,
-			//		Payload: OutPayloadMessage{
-			//			Penguin: PenguinMessage{
-			//				Name:   r.state.Penguin.ID,
-			//				Score:  uint(r.state.Penguin.Score),
-			//				Result: WIN,
-			//			},
-			//			Gun: GunMessage{
-			//				Name:   r.state.Gun.ID,
-			//				Score:  uint(r.state.Gun.Score),
-			//				Result: LOST,
-			//			},
-			//		},
-			//	}
-			//
-			//	r.SendRoomState(message)
-			//	r.gameState = FINISHGAME
-			//} else {
-			//	message := &OutcomeMessage{
-			//		Type: FINISHGAME,
-			//		Payload: OutPayloadMessage{
-			//			Penguin: PenguinMessage{
-			//				Name:   r.state.Penguin.ID,
-			//				Score:  uint(r.state.Penguin.Score),
-			//				Result: LOST,
-			//			},
-			//			Gun: GunMessage{
-			//				Name:   r.state.Gun.ID,
-			//				Score:  uint(r.state.Gun.Score),
-			//				Result: WIN,
-			//			},
-			//		},
-			//	}
-			//
-			//	r.SendRoomState(message)
-			//	r.gameState = FINISHGAME
-			//}
-			r.FinishGame()
+		if r.round == 2 {
+			message := r.FinishGame()
+			r.SendRoomState(message)
 		}
 	}
-
-	r.round += 1
-	r.state.Round = r.round
 }

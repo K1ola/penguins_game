@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	//"game/helpers"
+	"game/helpers"
 	"game/models"
 	"net/http"
 
@@ -14,7 +14,7 @@ import (
 func StartSingle(w http.ResponseWriter, r *http.Request) {
 	if PingGame.RoomsCount() >= 10 {
 		//TODO check response on the client side
-		LogMsg("Too many clients")
+		helpers.LogMsg("Too many clients")
 		w.WriteHeader(http.StatusTooManyRequests)
 		w.Write([]byte("Too many clients"))
 		return
@@ -36,12 +36,12 @@ func StartSingle(w http.ResponseWriter, r *http.Request) {
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		LogMsg("Connection error: ", err)
+		helpers.LogMsg("Connection error: ", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	LogMsg("Connected to client")
+	helpers.LogMsg("Connected to client")
 
 	//TODO remove hardcore, get from front player value
 	player := NewPlayer(conn, user.Login)
@@ -52,7 +52,7 @@ func StartSingle(w http.ResponseWriter, r *http.Request) {
 func StartMulti(w http.ResponseWriter, r *http.Request) {
 	if PingGame.RoomsCount() >= 10 {
 		//TODO check response on the client side
-		LogMsg("Too many clients")
+		helpers.LogMsg("Too many clients")
 		w.WriteHeader(http.StatusTooManyRequests)
 		w.Write([]byte("Too many clients"))
 		return
@@ -61,7 +61,7 @@ func StartMulti(w http.ResponseWriter, r *http.Request) {
 	var user *models.User
 	cookie, err := r.Cookie("sessionid")
 	if err != nil || cookie.Value == "" {
-		LogMsg("No Cookie in Multi")
+		helpers.LogMsg("No Cookie in Multi")
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	} else {
@@ -69,7 +69,7 @@ func StartMulti(w http.ResponseWriter, r *http.Request) {
 
 		user, err = models.AuthManager.GetUser(ctx, &models.JWT{Token: cookie.Value})
 		if err != nil {
-			LogMsg("Invalid Cookie in Multi")
+			helpers.LogMsg("Invalid Cookie in Multi")
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
@@ -78,8 +78,8 @@ func StartMulti(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(PingGame.Players)
 		for _, player := range PingGame.Players {
 			if player.ID == user.Login {
-				LogMsg("Such user already in game")
-				//TODO remove all users in game?
+				helpers.LogMsg("Such user already in game")
+				//TODO and what's next with this user?
 				w.WriteHeader(http.StatusForbidden)
 				return
 			}
@@ -93,12 +93,12 @@ func StartMulti(w http.ResponseWriter, r *http.Request) {
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		LogMsg("Connection error: ", err)
+		helpers.LogMsg("Connection error: ", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	LogMsg("Connected to client")
+	helpers.LogMsg("Connected to client")
 
 	player := NewPlayer(conn, user.Login)
 	go player.Listen()

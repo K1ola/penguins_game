@@ -176,30 +176,22 @@ func CreateFishes() map[int]*FishState {
 //	}
 //}
 
-//func FinishGame(r *Room) {
-//}
-
 func RunMulti(room *RoomMulti) *OutcomeMessage {
 	msg := room.state.RecalcPenguin()
 	if msg != nil {
-		for _, player := range room.Players {
-			//TODO
-			//room.FinishGame(player)
-			//room.round += 1
-			//room.state.Round = room.round
-			player.FinishRound()
-		}
+		//for _, player := range room.Players {
+		//	player.FinishRound()
+		//}
+		room.FinishRound()
 		return msg
 	}
 	room.state.RecalcGun()
 	msg = room.state.RecalcBullet()
 	if msg != nil {
-		for _, player := range room.Players {
-			//room.FinishGame(player)
-			//room.round += 1
-			//room.state.Round = room.round
-			player.FinishRound()
-		}
+		//for _, player := range room.Players {
+		//	player.FinishRound()
+		//}
+		room.FinishRound()
 		return msg
 	}
 	return room.state.GetState()

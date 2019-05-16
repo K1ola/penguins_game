@@ -3,6 +3,7 @@ package main
 import (
 	//"game/helpers"
 	"fmt"
+	"game/helpers"
 	"game/metrics"
 	"github.com/gorilla/websocket"
 	"log"
@@ -15,8 +16,9 @@ type Player struct {
 	out  chan *OutcomeMessage
 	roomSingle *RoomSingle
 	roomMulti *RoomMulti
-	GameMode string
-	Type string
+	GameMode GameMode
+	Type ClientRole
+	Playing bool
 }
 
 func NewPlayer(conn *websocket.Conn, id string) *Player {
@@ -28,6 +30,7 @@ func NewPlayer(conn *websocket.Conn, id string) *Player {
 		roomMulti: nil,
 		roomSingle: nil,
 		Type: PENGUIN,
+		Playing:false,
 	}
 }
 
@@ -42,7 +45,7 @@ func (p *Player) Listen() {
 			fmt.Println("ReadJSON error: ", err)
 			if websocket.IsUnexpectedCloseError(err) {
 				p.RemovePlayerFromRoom()
-				LogMsg("Player " + p.ID +" disconnected")
+				helpers.LogMsg("Player " + p.ID +" disconnected")
 				metrics.PlayersCountInGame.Dec()
 				return
 			}
@@ -74,7 +77,11 @@ func (p *Player) Listen() {
 					p.roomMulti.ProcessCommand(message)
 
 				case NEWROUND:
-					//start new Round
+					if p.roomMulti.gameState == WAITING {
+						p.roomMulti.SendRoomState(&OutcomeMessage{Type: WAIT})
+						p.roomMulti.gameState = INITIALIZED
+						continue
+					}
 					p.roomMulti.StartNewRound()
 				default:
 					fmt.Println("Default in Player.Listen() - in")
@@ -130,7 +137,7 @@ func (p *Player) FinishRound() {
 		//p.roomSingle.(p)
 	}
 	if p.roomMulti != nil {
-		p.roomMulti.FinishRound(p)
+		p.roomMulti.FinishRound()
 	}
 }
 
