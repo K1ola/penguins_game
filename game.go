@@ -162,7 +162,9 @@ func (g *Game) ProcessMulti(player *Player) {
 
 			room.state = CreateInitialState(room)
 
-			//penguin, gun := room.SelectPlayersRoles()
+			penguin, gun := room.SelectPlayersRoles()
+			room.state.Penguin.ID = penguin
+			room.state.Gun.ID = gun
 			//message := &OutcomeMessage{
 			//	Type: START,
 			//	Payload: OutPayloadMessage{

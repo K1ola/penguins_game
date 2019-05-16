@@ -284,15 +284,19 @@ func (r *RoomMulti) StartNewRound() {
 	if r.state != nil && r.round < 2 {
 		r.round += 1
 		r.state.Round = r.round
-		penguin, gun := r.SelectPlayersRoles()
+		//penguin, gun := r.SelectPlayersRoles()
 		message := &OutcomeMessage{
 			Type: START,
 			Payload: OutPayloadMessage{
 				Gun: GunMessage{
-					Name: gun,
+					//Name: gun,
+					Name: r.state.Gun.ID,
+					Score: uint(r.state.Gun.Score),
 				},
 				Penguin: PenguinMessage{
-					Name: penguin,
+					//Name: penguin,
+					Name: r.state.Penguin.ID,
+					Score: uint(r.state.Penguin.Score),
 				},
 				PiscesCount: 24,
 				Round:       uint(r.round),
