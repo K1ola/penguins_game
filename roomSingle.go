@@ -8,7 +8,7 @@ import (
 )
 
 type RoomSingle struct {
-	ID         string
+	ID         int
 	MaxPlayers uint
 	Player     *Player
 	mu         sync.Mutex
@@ -16,20 +16,23 @@ type RoomSingle struct {
 	unregister chan *Player
 	ticker     *time.Ticker
 	state      *RoomState
+	gameState GameCurrentState
 
 	broadcast chan *OutcomeMessage
 	finish chan *Player
 }
 
-func NewRoomSingle(MaxPlayers uint) *RoomSingle {
+func NewRoomSingle(MaxPlayers uint, id int) *RoomSingle {
 	return &RoomSingle{
+		ID: id,
 		MaxPlayers: MaxPlayers,
 		Player:    new(Player),
 		register:   make(chan *Player),
 		unregister: make(chan *Player),
-		ticker:     time.NewTicker(2 * time.Second),
+		ticker:     time.NewTicker(1 * time.Second),
 		state: &RoomState{
 			Penguin: new(PenguinState),
+			Gun: new(GunState),
 			Fishes: make(map[int]*FishState, 24),
 		},
 		broadcast: make(chan *OutcomeMessage, 1),
@@ -40,8 +43,6 @@ func NewRoomSingle(MaxPlayers uint) *RoomSingle {
 func (r *RoomSingle) Run() {
 	//defer helpers.RecoverPanic()
 	helpers.LogMsg("Room Single loop started")
-	//r.state.Gun.Bullet = CreateBullet(r)
-	//GameInit(r)
 	for {
 		select {
 		case player := <-r.unregister:
@@ -54,13 +55,9 @@ func (r *RoomSingle) Run() {
 			helpers.LogMsg("Player " + player.ID + " joined")
 			//r.Player.out <- &OutcomeMessage{Type:START}
 		case <-r.ticker.C:
-			r.broadcast <- &OutcomeMessage{Type:STATE}
-			//ProcessGameSingle(r)
-		case player := <- r.finish:
-			helpers.LogMsg("Player " + player.ID + " finished game")
-			player.out <- &OutcomeMessage{Type:FINISHGAME}
-			r.state.Penguin = nil
-			//FinishGame(r)
+			if r.gameState == RUNNING {
+				r.Player.out <- RunSingle(r)
+			}
 		}
 	}
 }
@@ -80,5 +77,12 @@ func (r *RoomSingle) AddPlayer(player *Player) {
 }
 
 func (r *RoomSingle) RemovePlayer(player *Player) {
-	r.unregister <- player
+	//r.unregister <- player
+	r.Player = nil
+	helpers.LogMsg("Player " + player.ID + " was removed from room")
+}
+
+
+func (r *RoomSingle) ProcessCommand(message *IncomeMessage) {
+	r.state.RotatePenguin()
 }

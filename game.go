@@ -99,12 +99,16 @@ func (g *Game) RoomsCount() int {
 }
 
 func (g *Game) ProcessSingle(player *Player) {
+	//TODO remove loop
 	for _, room := range g.roomsSingle {
 		if room.Player == nil {
 			g.mu.Lock()
 			room.AddPlayer(player)
 			//TODO add game states
 			g.mu.Unlock()
+			room.state = CreateInitialStateSingle(room)
+			room.state.Penguin.ID = player.ID
+			room.gameState = RUNNING
 			player.out <- &OutcomeMessage{
 				Type: START,
 				Payload:OutPayloadMessage{
@@ -131,7 +135,7 @@ func (g *Game) ProcessSingle(player *Player) {
 	}
 
 	//если все комнаты заняты - делой новую
-	room := NewRoomSingle(1)
+	room := NewRoomSingle(1, SingleRoomsCount)
 	g.mu.Lock()
 	g.AddToRoomSingle(room)
 	g.mu.Unlock()
@@ -141,6 +145,10 @@ func (g *Game) ProcessSingle(player *Player) {
 	g.mu.Lock()
 	room.AddPlayer(player)
 	g.mu.Unlock()
+
+	room.state = CreateInitialStateSingle(room)
+	room.state.Penguin.ID = player.ID
+	room.gameState = RUNNING
 	player.out <- &OutcomeMessage{
 		Type: START,
 		Payload:OutPayloadMessage{

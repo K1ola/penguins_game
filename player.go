@@ -77,7 +77,12 @@ func (p *Player) Listen() {
 				case NEWCOMMAND:
 					//get name, do rotate
 					//TODO select game mode
-					p.roomMulti.ProcessCommand(message)
+					if message.Payload.Mode == MULTI {
+						p.roomMulti.ProcessCommand(message)
+					}
+					if message.Payload.Mode == SINGLE {
+						p.roomSingle.ProcessCommand(message)
+					}
 
 				case NEWROUND:
 					if p.roomMulti.gameState == WAITING {

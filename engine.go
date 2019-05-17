@@ -191,6 +191,41 @@ func RunMulti(room *RoomMulti) *OutcomeMessage {
 	return room.state.GetState()
 }
 
+func RunSingle(room *RoomSingle) *OutcomeMessage {
+	msg := room.state.RecalcPenguin()
+	if msg != nil {
+		//room.FinishG()
+		return msg
+	}
+	room.state.RecalcGun()
+	msg = room.state.RecalcBullet()
+	if msg != nil {
+		//room.FinishRound()
+		return msg
+	}
+	return room.state.GetState()
+}
+
+//TODO remove repeat
+func CreateInitialStateSingle(room *RoomSingle) *RoomState {
+	state := new(RoomState)
+	var penguin, gun string
+
+	state.Penguin = CreatePenguin(penguin)
+	state.Gun = CreateGun(gun)
+	state.Fishes = CreateFishes()
+	var penguinScore, gunScore int
+	if room.state != nil {
+		penguinScore = room.state.Penguin.Score
+		gunScore = room.state.Gun.Score
+	}
+	room.state = state
+	room.state.Penguin.Score = penguinScore
+	room.state.Gun.Score = gunScore
+	room.state.Gun.ID = string(GUN)
+	return state
+}
+
 func CreateInitialState(room *RoomMulti) *RoomState {
 	state := new(RoomState)
 	var penguin, gun string
@@ -256,22 +291,25 @@ func (rs *RoomState) RecalcBullet() *OutcomeMessage{
 
 		rs.Gun.Bullet.Alpha = rs.Gun.Alpha
 		//TODO it is single mode logic
-		//if rs.Penguin.ClockwiseDirection {
-		//	alpha := rs.Penguin.Alpha + rand.Intn(101)
-		//	if alpha >= 360 {
-		//		rs.Gun.Bullet.Alpha = alpha - 360
-		//	} else {
-		//		rs.Gun.Bullet.Alpha = alpha
-		//	}
-		//	rs.Gun.Bullet.Alpha = rs.Penguin.Alpha + rand.Intn(101)
-		//} else {
-		//	alpha := rs.Penguin.Alpha - rand.Intn(101)
-		//	if alpha < 0 {
-		//		rs.Gun.Bullet.Alpha = 360 + alpha
-		//	} else {
-		//		rs.Gun.Bullet.Alpha = alpha
-		//	}
-		//}
+		if rs.Gun.ID == string(GUN) {
+			if rs.Penguin.ClockwiseDirection {
+				alpha := rs.Penguin.Alpha + rand.Intn(101)
+				if alpha >= 360 {
+					rs.Gun.Bullet.Alpha = alpha - 360
+				} else {
+					rs.Gun.Bullet.Alpha = alpha
+				}
+				rs.Gun.Bullet.Alpha = rs.Penguin.Alpha + rand.Intn(101)
+			} else {
+				alpha := rs.Penguin.Alpha - rand.Intn(101)
+				if alpha < 0 {
+					rs.Gun.Bullet.Alpha = 360 + alpha
+				} else {
+					rs.Gun.Bullet.Alpha = alpha
+				}
+			}
+		}
+
 		rs.Gun.Bullet.DistanceFromCenter = 0
 	}
 	rs.Gun.Bullet.DistanceFromCenter += 5
@@ -314,6 +352,7 @@ func (rs *RoomState) RecalcPenguin() *OutcomeMessage{
 						Name: rs.Penguin.ID,
 						Score: uint(scorePenguin),
 					},
+					//TODO hardcode GUN at the beginning
 					Gun:GunMessage{
 						Name: rs.Gun.ID,
 						Score: uint(rs.Gun.Score),
