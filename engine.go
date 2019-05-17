@@ -194,13 +194,13 @@ func RunMulti(room *RoomMulti) *OutcomeMessage {
 func RunSingle(room *RoomSingle) *OutcomeMessage {
 	msg := room.state.RecalcPenguin()
 	if msg != nil {
-		//room.FinishG()
+		room.FinishRound()
 		return msg
 	}
 	room.state.RecalcGun()
 	msg = room.state.RecalcBullet()
 	if msg != nil {
-		//room.FinishRound()
+		//room.FinishGame()
 		return msg
 	}
 	return room.state.GetState()
@@ -214,6 +214,7 @@ func CreateInitialStateSingle(room *RoomSingle) *RoomState {
 	state.Penguin = CreatePenguin(penguin)
 	state.Gun = CreateGun(gun)
 	state.Fishes = CreateFishes()
+	state.Round = room.round
 	var penguinScore, gunScore int
 	if room.state != nil {
 		penguinScore = room.state.Penguin.Score
@@ -252,6 +253,7 @@ func CreateInitialState(room *RoomMulti) *RoomState {
 }
 
 func (rs *RoomState) RecalcGun() {
+	//rs.Gun.Alpha = 1000
 	if rs.Gun.Alpha >= 360 {
 		rs.Gun.Alpha = 0
 	}
@@ -260,33 +262,55 @@ func (rs *RoomState) RecalcGun() {
 		rs.Gun.Alpha = 359
 	}
 
-	if rs.Gun.ClockwiseDirection {
-		rs.Gun.Alpha += 3
+	var delta int
+	if rs.Gun.ID == string(GUN) {
+		delta = 1
 	} else {
-		rs.Gun.Alpha -= 3
+		delta = 3
 	}
-	//return nil
+	if rs.Gun.ClockwiseDirection {
+		rs.Gun.Alpha += delta //3
+	} else {
+		rs.Gun.Alpha -= delta //3
+	}
 }
 
 func (rs *RoomState) RecalcBullet() *OutcomeMessage{
 	if rs.Gun.Bullet.DistanceFromCenter > 100*0.8/2 {
 		if rs.Gun.Bullet.Alpha % 360 >= rs.Penguin.Alpha - 7 && rs.Gun.Bullet.Alpha % 360 <= rs.Penguin.Alpha + 7 {
-			//lost
-			scoreGun := rs.Gun.Score + 1
-			rs.Gun.Score = scoreGun
-			return &OutcomeMessage{
-				Type:FINISHROUND,
-				Payload:OutPayloadMessage{
-					Penguin:PenguinMessage{
-						Name: rs.Penguin.ID,
-						Score: uint(rs.Penguin.Score),
-					},
-					Gun:GunMessage{
-						Name: rs.Gun.ID,
-						Score: uint(scoreGun),
-					},
-					Round: uint(rs.Round),
-				}}
+
+			//TODO it is single mode logic
+			if rs.Gun.ID == string(GUN) {
+				return &OutcomeMessage{
+					Type:FINISHGAME,
+					Payload:OutPayloadMessage{
+						Penguin:PenguinMessage{
+							Name: rs.Penguin.ID,
+							Score: uint(rs.Penguin.Score),
+						},
+						Gun:GunMessage{
+							Name: rs.Gun.ID,
+						},
+						Round: uint(rs.Round),
+					}}
+			} else {
+				//lost
+				scoreGun := rs.Gun.Score + 1
+				rs.Gun.Score = scoreGun
+				return &OutcomeMessage{
+					Type:FINISHROUND,
+					Payload:OutPayloadMessage{
+						Penguin:PenguinMessage{
+							Name: rs.Penguin.ID,
+							Score: uint(rs.Penguin.Score),
+						},
+						Gun:GunMessage{
+							Name: rs.Gun.ID,
+							Score: uint(scoreGun),
+						},
+						Round: uint(rs.Round),
+					}}
+			}
 		}
 
 		rs.Gun.Bullet.Alpha = rs.Gun.Alpha
@@ -342,23 +366,26 @@ func (rs *RoomState) RecalcPenguin() *OutcomeMessage{
 		}
 
 		if count == 0 {
-			// win penguin
-			scorePenguin := rs.Penguin.Score + 1
-			rs.Penguin.Score = scorePenguin
-			return &OutcomeMessage{
-				Type:FINISHROUND,
-				Payload:OutPayloadMessage{
-					Penguin:PenguinMessage{
-						Name: rs.Penguin.ID,
-						Score: uint(scorePenguin),
-					},
-					//TODO hardcode GUN at the beginning
-					Gun:GunMessage{
-						Name: rs.Gun.ID,
-						Score: uint(rs.Gun.Score),
-					},
-					Round: uint(rs.Round),
-				}}
+			//if rs.Gun.ID != string(GUN) {
+				// win penguin
+				scorePenguin := rs.Penguin.Score + 1
+				rs.Penguin.Score = scorePenguin
+				return &OutcomeMessage{
+					Type:FINISHROUND,
+					Payload:OutPayloadMessage{
+						Penguin:PenguinMessage{
+							Name: rs.Penguin.ID,
+							Score: uint(scorePenguin),
+						},
+						Gun:GunMessage{
+							Name: rs.Gun.ID,
+							Score: uint(rs.Gun.Score),
+						},
+						Round: uint(rs.Round),
+					}}
+			//} else {
+
+			//}
 		}
 
 		if rs.Penguin.ClockwiseDirection {

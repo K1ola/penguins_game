@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"game/helpers"
 	//"game/helpers"
 	"sync"
@@ -17,6 +18,7 @@ type RoomSingle struct {
 	ticker     *time.Ticker
 	state      *RoomState
 	gameState GameCurrentState
+	round int
 
 	broadcast chan *OutcomeMessage
 	finish chan *Player
@@ -29,12 +31,14 @@ func NewRoomSingle(MaxPlayers uint, id int) *RoomSingle {
 		Player:    new(Player),
 		register:   make(chan *Player),
 		unregister: make(chan *Player),
-		ticker:     time.NewTicker(1 * time.Second),
+		ticker:     time.NewTicker(10 * time.Millisecond),
 		state: &RoomState{
 			Penguin: new(PenguinState),
 			Gun: new(GunState),
 			Fishes: make(map[int]*FishState, 24),
+			Round: 0,
 		},
+		round: 0,
 		broadcast: make(chan *OutcomeMessage, 1),
 		finish: make(chan *Player),
 	}
@@ -56,7 +60,19 @@ func (r *RoomSingle) Run() {
 			//r.Player.out <- &OutcomeMessage{Type:START}
 		case <-r.ticker.C:
 			if r.gameState == RUNNING {
-				r.Player.out <- RunSingle(r)
+				message := RunSingle(r)
+				if message.Type != STATE {
+					switch message.Type {
+					case FINISHROUND:
+						fmt.Println(FINISHROUND)
+						fmt.Println(r.gameState)
+						r.StartNewRound()
+					case FINISHGAME:
+						//message = r.FinishGame()
+						r.gameState = FINISHED
+					}
+				}
+				r.Player.out <- message
 			}
 		}
 	}
@@ -86,3 +102,39 @@ func (r *RoomSingle) RemovePlayer(player *Player) {
 func (r *RoomSingle) ProcessCommand(message *IncomeMessage) {
 	r.state.RotatePenguin()
 }
+
+func (r *RoomSingle) FinishRound() {
+	r.round++
+	helpers.LogMsg("Player " + r.Player.ID + " finished round")
+	r.gameState = WAITING
+}
+
+func (r *RoomSingle) FinishGame() {
+	helpers.LogMsg("Player " + r.Player.ID + " finished round")
+	r.gameState = FINISHED
+}
+
+func (r *RoomSingle) StartNewRound() {
+	//time.Sleep(500 * time.Millisecond)
+		message := &OutcomeMessage{
+			Type: START,
+			Payload: OutPayloadMessage{
+				Gun: GunMessage{
+					Name: string(GUN),
+					Score: uint(r.state.Gun.Score),
+				},
+				Penguin: PenguinMessage{
+					//Name: penguin,
+					Name: r.state.Penguin.ID,
+					Score: uint(r.state.Penguin.Score),
+				},
+				PiscesCount: 24,
+				Round:       uint(r.round),
+			},
+		}
+		r.Player.out <- message
+		r.state = CreateInitialStateSingle(r)
+		r.gameState = RUNNING
+}
+
+
