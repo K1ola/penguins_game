@@ -3,6 +3,10 @@ package main
 import (
 	"fmt"
 	"game/helpers"
+	"game/models"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc"
+
 	//"game/helpers"
 	"sync"
 	"time"
@@ -69,7 +73,9 @@ func (r *RoomSingle) Run() {
 						r.StartNewRound()
 					case FINISHGAME:
 						//message = r.FinishGame()
+
 						r.gameState = FINISHED
+						r.SaveResult()
 					}
 				}
 				r.Player.out <- message
@@ -137,4 +143,24 @@ func (r *RoomSingle) StartNewRound() {
 		r.gameState = RUNNING
 }
 
+func (r *RoomSingle) SaveResult() {
+	//TODO do it correctly and once
+	grcpConn, err := grpc.Dial(
+		"127.0.0.1:8083",
+		grpc.WithInsecure(),
+	)
+	if err != nil {
+		helpers.LogMsg("Can`t connect to grpc")
+		return
+	}
+	defer grcpConn.Close()
+
+	AuthManager = models.NewAuthCheckerClient(grcpConn)
+	r.Player.instance.Score = uint64(r.Player.roomSingle.state.Penguin.Score)
+	fmt.Println(r.Player.Type)
+	ctx := context.Background()
+	_, err = AuthManager.SaveUserGame(ctx, r.Player.instance)
+	fmt.Println(err)
+
+}
 

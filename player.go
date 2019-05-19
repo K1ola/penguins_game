@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"game/helpers"
 	"game/metrics"
+	"game/models"
 	"github.com/gorilla/websocket"
 	"log"
 )
 
 type Player struct {
+	instance *models.User
 	conn *websocket.Conn
 	ID   string
 	game *Game
@@ -22,8 +24,9 @@ type Player struct {
 	Playing bool
 }
 
-func NewPlayer(conn *websocket.Conn, id string) *Player {
+func NewPlayer(conn *websocket.Conn, id string, instance *models.User) *Player {
 	return &Player{
+		instance: instance,
 		conn: conn,
 		ID:   id,
 		game: PingGame,

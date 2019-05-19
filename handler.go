@@ -11,6 +11,8 @@ import (
 	"golang.org/x/net/context"
 )
 
+var AuthManager models.AuthCheckerClient
+
 func StartSingle(w http.ResponseWriter, r *http.Request) {
 	if PingGame.RoomsCount() >= 10 {
 		//TODO check response on the client side
@@ -43,8 +45,24 @@ func StartSingle(w http.ResponseWriter, r *http.Request) {
 
 	helpers.LogMsg("Connected to client")
 
+	//grcpConn, err := grpc.Dial(
+	//	"127.0.0.1:8083",
+	//	grpc.WithInsecure(),
+	//)
+	//if err != nil {
+	//	helpers.LogMsg("Can`t connect to grpc")
+	//	w.WriteHeader(http.StatusInternalServerError)
+	//	return
+	//}
+	//defer grcpConn.Close()
+	//
+	//AuthManager = models.NewAuthCheckerClient(grcpConn)
+
+	//ctx := context.Background()
+	//_, _ = AuthManager.ChangeUser(ctx, user)
+
 	//TODO remove hardcore, get from front player value
-	player := NewPlayer(conn, user.Login)
+	player := NewPlayer(conn, user.Login, user)
 	player.ID = user.Login
 	go player.Listen()
 }
@@ -85,7 +103,7 @@ func StartMulti(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		cookie.Value = user.Login
+		//cookie.Value = user.Login
 	}
 
 	upgrader := &websocket.Upgrader{}
@@ -100,6 +118,6 @@ func StartMulti(w http.ResponseWriter, r *http.Request) {
 
 	helpers.LogMsg("Connected to client")
 
-	player := NewPlayer(conn, user.Login)
+	player := NewPlayer(conn, user.Login, user)
 	go player.Listen()
 }

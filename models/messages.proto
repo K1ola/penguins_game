@@ -44,4 +44,5 @@ service AuthChecker {
     rpc GetUserCountInfo (Nothing) returns (LeadersInfo) {}
     rpc ChangeUser (User) returns (Nothing) {}
     rpc DeleteUser (JWT) returns (Nothing) {}
+    rpc SaveUserGame (User) returns (Nothing) {}
 }

@@ -3,6 +3,9 @@ package main
 import (
 	"fmt"
 	"game/helpers"
+	"game/models"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 	"math/rand"
 	"sync"
 	"time"
@@ -31,7 +34,7 @@ func NewRoomMulti(MaxPlayers uint, id int) *RoomMulti {
 		Players:    make(map[string]*Player),
 		register:   make(chan *Player),
 		unregister: make(chan *Player),
-		ticker:     time.NewTicker(100 * time.Millisecond),
+		ticker:     time.NewTicker(10 * time.Millisecond),
 		state: &RoomState{
 			Penguin: new(PenguinState),
 			Gun: new(GunState),
@@ -76,6 +79,7 @@ func (r *RoomMulti) Run() {
 					message := r.FinishGame()
 					r.SendRoomState(message)
 					//r.gameState = FINISHED
+					r.SaveResult()
 					return
 				}
 			}
@@ -238,5 +242,31 @@ func (r *RoomMulti) StartNewRound() {
 			r.SendRoomState(message)
 			//r.gameState = FINISHED
 		}
+	}
+}
+
+func (r *RoomMulti) SaveResult() {
+	//TODO do it correctly and once
+	grcpConn, err := grpc.Dial(
+		"127.0.0.1:8083",
+		grpc.WithInsecure(),
+	)
+	if err != nil {
+		helpers.LogMsg("Can`t connect to grpc")
+		return
+	}
+	defer grcpConn.Close()
+
+	AuthManager = models.NewAuthCheckerClient(grcpConn)
+	for _, player := range r.Players {
+		if player.Type == PENGUIN {
+			player.instance.Score = uint64(player.roomMulti.state.Penguin.Score)
+		}
+		if player.Type == GUN {
+			player.instance.Score = uint64(player.roomMulti.state.Gun.Score)
+		}
+		ctx := context.Background()
+		_, err := AuthManager.SaveUserGame(ctx, player.instance)
+		fmt.Println(err)
 	}
 }
