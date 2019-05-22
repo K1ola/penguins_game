@@ -110,6 +110,7 @@ func (r *RoomMulti) RemovePlayer(player *Player) {
 func (r *RoomMulti) SelectPlayersRoles() (string, string) {
 	var penguin, gun string
 	digit := rand.Intn(2)
+	time.Sleep(500* time.Millisecond)
 	for _, player := range r.Players {
 		if digit == 0 {
 			player.Type = PENGUIN
