@@ -3,6 +3,7 @@ package main
 import (
 	//"game/helpers"
 	"fmt"
+	"game/easyjson"
 	"game/helpers"
 	"game/metrics"
 	"sync"
@@ -48,9 +49,9 @@ func (g *Game) Run() {
 
 		case player, _ := <-g.register:
 			switch player.GameMode {
-				case SINGLE:
+				case easyjson.SINGLE:
 					g.ProcessSingle(player)
-				case MULTI:
+				case easyjson.MULTI:
 					g.ProcessMulti(player)
 				default:
 					fmt.Println("Empty")
@@ -108,20 +109,20 @@ func (g *Game) ProcessSingle(player *Player) {
 			g.mu.Unlock()
 			room.state = CreateInitialStateSingle(room)
 			room.state.Penguin.ID = player.ID
-			room.gameState = RUNNING
-			player.out <- &OutcomeMessage{
-				Type: START,
-				Payload:OutPayloadMessage{
-					Gun:GunMessage{
-						Bullet:BulletMessage{
+			room.gameState = easyjson.RUNNING
+			player.out <- &easyjson.OutcomeMessage{
+				Type: easyjson.START,
+				Payload: easyjson.OutPayloadMessage{
+					Gun: easyjson.GunMessage{
+						Bullet: easyjson.BulletMessage{
 							Alpha: 0,
 							DistanceFromCenter: 0,
 						},
 						Alpha: 0,
-						Name: string(GUN),
+						Name: string(easyjson.GUN),
 						Result: "",
 					},
-					Penguin:PenguinMessage{
+					Penguin: easyjson.PenguinMessage{
 						Clockwise:false,
 						Alpha: 0,
 						Name: player.ID,
@@ -148,20 +149,20 @@ func (g *Game) ProcessSingle(player *Player) {
 
 	room.state = CreateInitialStateSingle(room)
 	room.state.Penguin.ID = player.ID
-	room.gameState = RUNNING
-	player.out <- &OutcomeMessage{
-		Type: START,
-		Payload:OutPayloadMessage{
-			Gun:GunMessage{
-				Bullet:BulletMessage{
+	room.gameState = easyjson.RUNNING
+	player.out <- &easyjson.OutcomeMessage{
+		Type: easyjson.START,
+		Payload: easyjson.OutPayloadMessage{
+			Gun: easyjson.GunMessage{
+				Bullet: easyjson.BulletMessage{
 					Alpha: 0,
 					DistanceFromCenter: 0,
 				},
 				Alpha: 0,
-				Name: string(GUN),
+				Name: string(easyjson.GUN),
 				Result: "",
 			},
-			Penguin:PenguinMessage{
+			Penguin: easyjson.PenguinMessage{
 				Clockwise:false,
 				Alpha: 0,
 				Name: player.ID,
@@ -173,7 +174,7 @@ func (g *Game) ProcessSingle(player *Player) {
 
 func (g *Game) ProcessMulti(player *Player) {
 	for _, room := range g.roomsMulti {
-		if room.gameState == PICKINGUP { //len(room.Players) < int(room.MaxPlayers) {
+		if room.gameState == easyjson.PICKINGUP { //len(room.Players) < int(room.MaxPlayers) {
 			g.mu.Lock()
 			room.AddPlayer(player)
 			g.mu.Unlock()
@@ -183,18 +184,18 @@ func (g *Game) ProcessMulti(player *Player) {
 			penguin, gun := room.SelectPlayersRoles()
 			room.state.Penguin.ID = penguin
 			room.state.Gun.ID = gun
-			room.gameState = WAITING
+			room.gameState = easyjson.WAITING
 			room.state.Round = 0
 			fmt.Println(gun)
 			fmt.Println(penguin)
-			room.SendRoomState(&OutcomeMessage{
-				Type:FINISHROUND,
-				Payload:OutPayloadMessage{
-					Penguin:PenguinMessage{
+			room.SendRoomState(&easyjson.OutcomeMessage{
+				Type: easyjson.FINISHROUND,
+				Payload: easyjson.OutPayloadMessage{
+					Penguin: easyjson.PenguinMessage{
 						Name: room.state.Penguin.ID,
 						Score: uint(room.state.Penguin.Score),
 					},
-					Gun:GunMessage{
+					Gun: easyjson.GunMessage{
 						Name: room.state.Gun.ID,
 						Score: uint(room.state.Gun.Score),
 					},
@@ -215,7 +216,7 @@ func (g *Game) ProcessMulti(player *Player) {
 
 	g.mu.Lock()
 	room.AddPlayer(player)
-	player.out <- &OutcomeMessage{Type: WAIT}
+	player.out <- &easyjson.OutcomeMessage{Type: easyjson.WAIT}
 	g.mu.Unlock()
-	room.gameState = PICKINGUP
+	room.gameState = easyjson.PICKINGUP
 }

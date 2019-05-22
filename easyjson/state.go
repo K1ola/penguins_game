@@ -1,6 +1,4 @@
-package main
-
-import "time"
+package easyjson
 
 type GameMode string
 const (
@@ -45,38 +43,3 @@ const (
 	FINISHED GameCurrentState = "FINISHED"	//game has finished
 )
 
-
-type PenguinState struct {
-	ID                 string
-	ClockwiseDirection bool
-	Alpha              int
-	Result 			   GameResult
-	Score              int
-}
-
-type GunState struct {
-	ID                 string
-	ClockwiseDirection bool
-	Alpha              int
-	Bullet 			   *BulletState
-	Result 			   GameResult
-	Score              int
-}
-
-type BulletState struct {
-	Alpha int
-	DistanceFromCenter int
-}
-
-type FishState struct {
-	Alpha int
-	Eaten bool
-}
-
-type RoomState struct {
-	Penguin *PenguinState
-	Gun  *GunState
-	Fishes 	map[int]*FishState
-	CurrentTime time.Time
-	Round int
-}

@@ -3,6 +3,7 @@ package main
 import (
 	//"game/helpers"
 	"fmt"
+	"game/easyjson"
 	"game/helpers"
 	"game/metrics"
 	"game/models"
@@ -11,31 +12,31 @@ import (
 )
 
 type Player struct {
-	instance *models.User
-	conn *websocket.Conn
-	ID   string
-	game *Game
-	in   chan *IncomeMessage
-	out  chan *OutcomeMessage
+	instance   *models.User
+	conn       *websocket.Conn
+	ID         string
+	game       *Game
+	in         chan *easyjson.IncomeMessage
+	out        chan *easyjson.OutcomeMessage
 	roomSingle *RoomSingle
-	roomMulti *RoomMulti
-	GameMode GameMode
-	Type ClientRole
-	Playing bool
+	roomMulti  *RoomMulti
+	GameMode   easyjson.GameMode
+	Type       easyjson.ClientRole
+	Playing    bool
 }
 
 func NewPlayer(conn *websocket.Conn, id string, instance *models.User) *Player {
 	return &Player{
-		instance: instance,
-		conn: conn,
-		ID:   id,
-		game: PingGame,
-		in:   make(chan *IncomeMessage),
-		out:  make(chan *OutcomeMessage, 1),
-		roomMulti: nil,
+		instance:   instance,
+		conn:       conn,
+		ID:         id,
+		game:       PingGame,
+		in:         make(chan *easyjson.IncomeMessage),
+		out:        make(chan *easyjson.OutcomeMessage, 1),
+		roomMulti:  nil,
 		roomSingle: nil,
-		Type: PENGUIN,
-		Playing:false,
+		Type:       easyjson.PENGUIN,
+		Playing:    false,
 	}
 }
 
@@ -45,7 +46,7 @@ func (p *Player) Listen() {
 		//defer helpers.RecoverPanic()
 		for {
 			//слушаем фронт
-			message := &IncomeMessage{}
+			message := &easyjson.IncomeMessage{}
 			err := p.conn.ReadJSON(message)
 			fmt.Println("ReadJSON error: ", err)
 			if websocket.IsUnexpectedCloseError(err) {
@@ -70,28 +71,28 @@ func (p *Player) Listen() {
 			fmt.Printf("Front says: %#v", message)
 			fmt.Println("")
 			switch message.Type {
-				case NEWPLAYER:
+				case easyjson.NEWPLAYER:
 					//стартовая инициализация, производится строго вначале один раз
 					if message.Payload.Mode != "" {
 						p.GameMode = message.Payload.Mode
 						//p.ID = message.Payload.Name
 						PingGame.AddPlayer(p)
 					}
-				case NEWCOMMAND:
+				case easyjson.NEWCOMMAND:
 					//get name, do rotate
 					//TODO select game mode
-					if message.Payload.Mode == MULTI {
+					if message.Payload.Mode == easyjson.MULTI {
 						p.roomMulti.ProcessCommand(message)
 					}
-					if message.Payload.Mode == SINGLE {
+					if message.Payload.Mode == easyjson.SINGLE {
 						p.roomSingle.ProcessCommand(message)
 					}
 
-				case NEWROUND:
-					if p.roomMulti.gameState == WAITING {
+				case easyjson.NEWROUND:
+					if p.roomMulti.gameState == easyjson.WAITING {
 						fmt.Println(p.roomMulti)
-						p.roomMulti.SendRoomState(&OutcomeMessage{Type: WAIT})
-						p.roomMulti.gameState = INITIALIZED
+						p.roomMulti.SendRoomState(&easyjson.OutcomeMessage{Type: easyjson.WAIT})
+						p.roomMulti.gameState = easyjson.INITIALIZED
 						continue
 					}
 					p.roomMulti.StartNewRound()
@@ -105,15 +106,15 @@ func (p *Player) Listen() {
 			//шлем всем фронтам текущее состояние
 			if message != nil {
 				switch message.Type {
-				case START:
+				case easyjson.START:
 					fmt.Println("Process START")
-				case WAIT:
+				case easyjson.WAIT:
 					fmt.Println("Process WAIT")
-				case FINISHROUND:
+				case easyjson.FINISHROUND:
 					fmt.Println("Process FINISH ROUND")
-				case FINISHGAME:
+				case easyjson.FINISHGAME:
 					fmt.Println("Process FINISH GAME")
-				case STATE:
+				case easyjson.STATE:
 					fmt.Println("Process STATE")
 				default:
 					fmt.Println("Default in Player.Listen() - out")

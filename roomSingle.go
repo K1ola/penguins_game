@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"game/easyjson"
 	"game/helpers"
 	"game/models"
 	"golang.org/x/net/context"
@@ -20,11 +21,11 @@ type RoomSingle struct {
 	register   chan *Player
 	unregister chan *Player
 	ticker     *time.Ticker
-	state      *RoomState
-	gameState GameCurrentState
-	round int
+	state      *easyjson.RoomState
+	gameState  easyjson.GameCurrentState
+	round      int
 
-	broadcast chan *OutcomeMessage
+	broadcast chan *easyjson.OutcomeMessage
 	finish chan *Player
 }
 
@@ -36,14 +37,14 @@ func NewRoomSingle(MaxPlayers uint, id int) *RoomSingle {
 		register:   make(chan *Player),
 		unregister: make(chan *Player),
 		ticker:     time.NewTicker(10 * time.Millisecond),
-		state: &RoomState{
-			Penguin: new(PenguinState),
-			Gun: new(GunState),
-			Fishes: make(map[int]*FishState, 24),
+		state: &easyjson.RoomState{
+			Penguin: new(easyjson.PenguinState),
+			Gun: new(easyjson.GunState),
+			Fishes: make(map[int]*easyjson.FishState, 24),
 			Round: 0,
 		},
 		round: 0,
-		broadcast: make(chan *OutcomeMessage, 1),
+		broadcast: make(chan *easyjson.OutcomeMessage, 1),
 		finish: make(chan *Player),
 	}
 }
@@ -63,18 +64,18 @@ func (r *RoomSingle) Run() {
 			helpers.LogMsg("Player " + player.ID + " joined")
 			//r.Player.out <- &OutcomeMessage{Type:START}
 		case <-r.ticker.C:
-			if r.gameState == RUNNING {
+			if r.gameState == easyjson.RUNNING {
 				message := RunSingle(r)
-				if message.Type != STATE {
+				if message.Type != easyjson.STATE {
 					switch message.Type {
-					case FINISHROUND:
-						fmt.Println(FINISHROUND)
+					case easyjson.FINISHROUND:
+						fmt.Println(easyjson.FINISHROUND)
 						fmt.Println(r.gameState)
 						r.StartNewRound()
-					case FINISHGAME:
+					case easyjson.FINISHGAME:
 						//message = r.FinishGame()
 
-						r.gameState = FINISHED
+						r.gameState = easyjson.FINISHED
 						r.SaveResult()
 					}
 				}
@@ -85,7 +86,7 @@ func (r *RoomSingle) Run() {
 }
 
 func (r *RoomSingle) AddPlayer(player *Player) {
-	ps := &PenguinState{
+	ps := &easyjson.PenguinState{
 		ID:                 player.ID,
 		Alpha:              0,
 		ClockwiseDirection: true,
@@ -105,31 +106,31 @@ func (r *RoomSingle) RemovePlayer(player *Player) {
 }
 
 
-func (r *RoomSingle) ProcessCommand(message *IncomeMessage) {
+func (r *RoomSingle) ProcessCommand(message *easyjson.IncomeMessage) {
 	r.state.RotatePenguin()
 }
 
 func (r *RoomSingle) FinishRound() {
 	r.round++
 	helpers.LogMsg("Player " + r.Player.ID + " finished round")
-	r.gameState = WAITING
+	r.gameState = easyjson.WAITING
 }
 
 func (r *RoomSingle) FinishGame() {
 	helpers.LogMsg("Player " + r.Player.ID + " finished round")
-	r.gameState = FINISHED
+	r.gameState = easyjson.FINISHED
 }
 
 func (r *RoomSingle) StartNewRound() {
 	//time.Sleep(500 * time.Millisecond)
-		message := &OutcomeMessage{
-			Type: START,
-			Payload: OutPayloadMessage{
-				Gun: GunMessage{
-					Name: string(GUN),
+		message := &easyjson.OutcomeMessage{
+			Type: easyjson.START,
+			Payload: easyjson.OutPayloadMessage{
+				Gun: easyjson.GunMessage{
+					Name: string(easyjson.GUN),
 					Score: uint(r.state.Gun.Score),
 				},
-				Penguin: PenguinMessage{
+				Penguin: easyjson.PenguinMessage{
 					//Name: penguin,
 					Name: r.state.Penguin.ID,
 					Score: uint(r.state.Penguin.Score),
@@ -140,7 +141,7 @@ func (r *RoomSingle) StartNewRound() {
 		}
 		r.Player.out <- message
 		r.state = CreateInitialStateSingle(r)
-		r.gameState = RUNNING
+		r.gameState = easyjson.RUNNING
 }
 
 func (r *RoomSingle) SaveResult() {

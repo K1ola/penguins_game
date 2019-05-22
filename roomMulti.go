@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"game/easyjson"
 	"game/helpers"
 	"game/models"
 	"golang.org/x/net/context"
@@ -19,11 +20,11 @@ type RoomMulti struct {
 	register   chan *Player
 	unregister chan *Player
 	ticker     *time.Ticker
-	state      *RoomState
-	gameState GameCurrentState
-	round int
+	state      *easyjson.RoomState
+	gameState  easyjson.GameCurrentState
+	round      int
 
-	broadcast chan *OutcomeMessage
+	broadcast chan *easyjson.OutcomeMessage
 	finish chan *Player
 }
 
@@ -35,14 +36,14 @@ func NewRoomMulti(MaxPlayers uint, id int) *RoomMulti {
 		register:   make(chan *Player),
 		unregister: make(chan *Player),
 		ticker:     time.NewTicker(100 * time.Millisecond),
-		state: &RoomState{
-			Penguin: new(PenguinState),
-			Gun: new(GunState),
-			Fishes: make(map[int]*FishState, 24),
+		state: &easyjson.RoomState{
+			Penguin: new(easyjson.PenguinState),
+			Gun: new(easyjson.GunState),
+			Fishes: make(map[int]*easyjson.FishState, 24),
 			Round: -1,
 		},
 		round: -1,
-		broadcast: make(chan *OutcomeMessage),
+		broadcast: make(chan *easyjson.OutcomeMessage),
 		finish: make(chan *Player),
 	}
 }
@@ -63,19 +64,19 @@ func (r *RoomMulti) Run() {
 		case message := <- r.broadcast:
 			r.SendRoomState(message)
 		case <-r.ticker.C:
-			if r.gameState == RUNNING {
+			if r.gameState == easyjson.RUNNING {
 				  message := RunMulti(r)
-				  if message.Type != STATE {
+				  if message.Type != easyjson.STATE {
 					  switch message.Type {
-					  case FINISHROUND:
-					  		fmt.Println(FINISHROUND)
+					  case easyjson.FINISHROUND:
+					  		fmt.Println(easyjson.FINISHROUND)
 					  		fmt.Println(r.gameState)
-					  case FINISHGAME:
+					  case easyjson.FINISHGAME:
 							message = r.FinishGame()
 					  }
 				  }
 				  r.SendRoomState(message)
-				if r.round == 2 && r.gameState == FINISHED {
+				if r.round == 2 && r.gameState == easyjson.FINISHED {
 					message := r.FinishGame()
 					r.SendRoomState(message)
 					//r.gameState = FINISHED
@@ -88,7 +89,7 @@ func (r *RoomMulti) Run() {
 }
 
 func (r *RoomMulti) AddPlayer(player *Player) {
-	ps := &PenguinState{
+	ps := &easyjson.PenguinState{
 		ID:                 player.ID,
 		Alpha:              0,
 		ClockwiseDirection: true,
@@ -113,11 +114,11 @@ func (r *RoomMulti) SelectPlayersRoles() (string, string) {
 	time.Sleep(500* time.Millisecond)
 	for _, player := range r.Players {
 		if digit == 0 {
-			player.Type = PENGUIN
+			player.Type = easyjson.PENGUIN
 			penguin = player.ID
 			digit = 1
 		} else {
-			player.Type = GUN
+			player.Type = easyjson.GUN
 			gun = player.ID
 			digit = 0
 		}
@@ -125,7 +126,7 @@ func (r *RoomMulti) SelectPlayersRoles() (string, string) {
 	return penguin, gun
 }
 
-func (r *RoomMulti) ProcessCommand(message *IncomeMessage) {
+func (r *RoomMulti) ProcessCommand(message *easyjson.IncomeMessage) {
 	login := message.Payload.Name
 	for _, player := range r.Players {
 		if player.ID != login {
@@ -133,9 +134,9 @@ func (r *RoomMulti) ProcessCommand(message *IncomeMessage) {
 		}
 		fmt.Println(r.state)
 		switch player.Type {
-		case PENGUIN:
+		case easyjson.PENGUIN:
 			r.state.RotatePenguin()
-		case GUN:
+		case easyjson.GUN:
 			r.state.RotateGun()
 		default:
 			fmt.Println("Incorrect player type!")
@@ -144,47 +145,47 @@ func (r *RoomMulti) ProcessCommand(message *IncomeMessage) {
 	}
 }
 
-func (r *RoomMulti) FinishGame() *OutcomeMessage {
+func (r *RoomMulti) FinishGame() *easyjson.OutcomeMessage {
 	for _, player := range r.Players {
 		helpers.LogMsg("Player " + player.ID + " finished game")
 	}
 	//r.gameState = FINISHED
 	if r.state.Penguin.Score > r.state.Gun.Score {
-		message := &OutcomeMessage{
-			Type: FINISHGAME,
-			Payload: OutPayloadMessage{
-				Penguin: PenguinMessage{
+		message := &easyjson.OutcomeMessage{
+			Type: easyjson.FINISHGAME,
+			Payload: easyjson.OutPayloadMessage{
+				Penguin: easyjson.PenguinMessage{
 					Name:   r.state.Penguin.ID,
 					Score:  uint(r.state.Penguin.Score),
-					Result: WIN,
+					Result: easyjson.WIN,
 				},
-				Gun: GunMessage{
+				Gun: easyjson.GunMessage{
 					Name:   r.state.Gun.ID,
 					Score:  uint(r.state.Gun.Score),
-					Result: LOST,
+					Result: easyjson.LOST,
 				},
 			},
 		}
 
-		r.gameState = FINISHED
+		r.gameState = easyjson.FINISHED
 		return message
 	} else {
-		message := &OutcomeMessage{
-			Type: FINISHGAME,
-			Payload: OutPayloadMessage{
-				Penguin: PenguinMessage{
+		message := &easyjson.OutcomeMessage{
+			Type: easyjson.FINISHGAME,
+			Payload: easyjson.OutPayloadMessage{
+				Penguin: easyjson.PenguinMessage{
 					Name:   r.state.Penguin.ID,
 					Score:  uint(r.state.Penguin.Score),
-					Result: LOST,
+					Result: easyjson.LOST,
 				},
-				Gun: GunMessage{
+				Gun: easyjson.GunMessage{
 					Name:   r.state.Gun.ID,
 					Score:  uint(r.state.Gun.Score),
-					Result: WIN,
+					Result: easyjson.WIN,
 				},
 			},
 		}
-		r.gameState = FINISHED
+		r.gameState = easyjson.FINISHED
 		return message
 	}
 	//r.state.Penguin = nil
@@ -195,13 +196,13 @@ func (r *RoomMulti) FinishRound() {
 	for _, player := range r.Players {
 		helpers.LogMsg("Player " + player.ID + " finished round")
 	}
-	r.gameState = WAITING
+	r.gameState = easyjson.WAITING
 	if r.round == 2 {
-			r.gameState = FINISHED
+			r.gameState = easyjson.FINISHED
 	}
 }
 
-func (r *RoomMulti) SendRoomState(message *OutcomeMessage) {
+func (r *RoomMulti) SendRoomState(message *easyjson.OutcomeMessage) {
 	for _, player := range r.Players {
 		select {
 		case player.out <- message:
@@ -217,15 +218,15 @@ func (r *RoomMulti) StartNewRound() {
 		r.round += 1
 		r.state.Round = r.round
 		//penguin, gun := r.SelectPlayersRoles()
-		message := &OutcomeMessage{
-			Type: START,
-			Payload: OutPayloadMessage{
-				Gun: GunMessage{
+		message := &easyjson.OutcomeMessage{
+			Type: easyjson.START,
+			Payload: easyjson.OutPayloadMessage{
+				Gun: easyjson.GunMessage{
 					//Name: gun,
 					Name: r.state.Gun.ID,
 					Score: uint(r.state.Gun.Score),
 				},
-				Penguin: PenguinMessage{
+				Penguin: easyjson.PenguinMessage{
 					//Name: penguin,
 					Name: r.state.Penguin.ID,
 					Score: uint(r.state.Penguin.Score),
@@ -236,7 +237,7 @@ func (r *RoomMulti) StartNewRound() {
 		}
 		r.SendRoomState(message)
 		r.state = CreateInitialState(r)
-		r.gameState = RUNNING
+		r.gameState = easyjson.RUNNING
 	} else {
 		if r.round == 2 {
 			message := r.FinishGame()
@@ -260,10 +261,10 @@ func (r *RoomMulti) SaveResult() {
 
 	AuthManager = models.NewAuthCheckerClient(grcpConn)
 	for _, player := range r.Players {
-		if player.Type == PENGUIN {
+		if player.Type == easyjson.PENGUIN {
 			player.instance.Score = uint64(player.roomMulti.state.Penguin.Score)
 		}
-		if player.Type == GUN {
+		if player.Type == easyjson.GUN {
 			player.instance.Score = uint64(player.roomMulti.state.Gun.Score)
 		}
 		ctx := context.Background()
