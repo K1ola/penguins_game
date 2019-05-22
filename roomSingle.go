@@ -40,9 +40,9 @@ func NewRoomSingle(MaxPlayers uint, id int) *RoomSingle {
 			Penguin: new(PenguinState),
 			Gun: new(GunState),
 			Fishes: make(map[int]*FishState, 24),
-			Round: 0,
+			Round: 1,
 		},
-		round: 0,
+		round: 1,
 		broadcast: make(chan *OutcomeMessage, 1),
 		finish: make(chan *Player),
 	}

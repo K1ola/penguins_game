@@ -184,7 +184,7 @@ func (g *Game) ProcessMulti(player *Player) {
 			room.state.Penguin.ID = penguin
 			room.state.Gun.ID = gun
 			room.gameState = WAITING
-			room.state.Round = 0
+			room.state.Round = 1
 			fmt.Println(gun)
 			fmt.Println(penguin)
 			room.SendRoomState(&OutcomeMessage{

@@ -39,9 +39,9 @@ func NewRoomMulti(MaxPlayers uint, id int) *RoomMulti {
 			Penguin: new(PenguinState),
 			Gun: new(GunState),
 			Fishes: make(map[int]*FishState, 24),
-			Round: -1,
+			Round: 1,
 		},
-		round: -1,
+		round: 1,
 		broadcast: make(chan *OutcomeMessage),
 		finish: make(chan *Player),
 	}
@@ -75,7 +75,7 @@ func (r *RoomMulti) Run() {
 					  }
 				  }
 				  r.SendRoomState(message)
-				if r.round == 2 && r.gameState == FINISHED {
+				if r.round > 3 && r.gameState == FINISHED {
 					message := r.FinishGame()
 					r.SendRoomState(message)
 					//r.gameState = FINISHED
@@ -196,7 +196,7 @@ func (r *RoomMulti) FinishRound() {
 		helpers.LogMsg("Player " + player.ID + " finished round")
 	}
 	r.gameState = WAITING
-	if r.round == 2 {
+	if r.round > 3 {
 			r.gameState = FINISHED
 	}
 }
@@ -213,7 +213,7 @@ func (r *RoomMulti) SendRoomState(message *OutcomeMessage) {
 
 func (r *RoomMulti) StartNewRound() {
 	time.Sleep(1000 * time.Millisecond)
-	if r.state != nil && r.round < 2 {
+	if r.state != nil && r.round <= 3 {
 		r.round += 1
 		r.state.Round = r.round
 		//penguin, gun := r.SelectPlayersRoles()
@@ -238,7 +238,7 @@ func (r *RoomMulti) StartNewRound() {
 		r.state = CreateInitialState(r)
 		r.gameState = RUNNING
 	} else {
-		if r.round == 2 {
+		if r.round > 3 {
 			message := r.FinishGame()
 			r.SendRoomState(message)
 			//r.gameState = FINISHED
