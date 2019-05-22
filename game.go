@@ -184,6 +184,20 @@ func (g *Game) ProcessMulti(player *Player) {
 			room.state.Penguin.ID = penguin
 			room.state.Gun.ID = gun
 			room.gameState = WAITING
+			room.state.Round = 0
+			room.SendRoomState(&OutcomeMessage{
+				Type:FINISHROUND,
+				Payload:OutPayloadMessage{
+					Penguin:PenguinMessage{
+						Name: room.state.Penguin.ID,
+						Score: uint(room.state.Penguin.Score),
+					},
+					Gun:GunMessage{
+						Name: room.state.Gun.ID,
+						Score: uint(room.state.Gun.Score),
+					},
+					Round: uint(room.state.Round),
+				}})
 			//room.StartNewRound()
 			//continue LOOP
 			return
