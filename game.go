@@ -183,7 +183,8 @@ func (g *Game) ProcessMulti(player *Player) {
 			penguin, gun := room.SelectPlayersRoles()
 			room.state.Penguin.ID = penguin
 			room.state.Gun.ID = gun
-			room.StartNewRound()
+			room.gameState = WAITING
+			//room.StartNewRound()
 			//continue LOOP
 			return
 		}
