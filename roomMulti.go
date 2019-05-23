@@ -48,7 +48,7 @@ func NewRoomMulti(MaxPlayers uint, id int) *RoomMulti {
 }
 
 func (r *RoomMulti) Run() {
-	//defer helpers.RecoverPanic()
+	defer helpers.RecoverPanic()
 	helpers.LogMsg("Room Multi loop started")
 	for {
 		select {
@@ -203,6 +203,9 @@ func (r *RoomMulti) FinishRound() {
 
 func (r *RoomMulti) SendRoomState(message *OutcomeMessage) {
 	for _, player := range r.Players {
+		if message == nil {
+			continue
+		}
 		select {
 		case player.out <- message:
 		default:

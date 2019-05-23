@@ -40,9 +40,9 @@ func NewPlayer(conn *websocket.Conn, id string, instance *models.User) *Player {
 }
 
 func (p *Player) Listen() {
-	//defer helpers.RecoverPanic()
+	defer helpers.RecoverPanic()
 	go func() {
-		//defer helpers.RecoverPanic()
+		defer helpers.RecoverPanic()
 		for {
 			//слушаем фронт
 			message := &IncomeMessage{}
@@ -50,8 +50,6 @@ func (p *Player) Listen() {
 			fmt.Println("ReadJSON error: ", err)
 			if websocket.IsUnexpectedCloseError(err) {
 				p.roomMulti.gameState = FINISHED
-				p.RemovePlayerFromRoom()
-				p.RemovePlayerFromGame()
 				if p.roomMulti != nil {
 					message := new(OutcomeMessage)
 					if p.Type == PENGUIN {
@@ -88,6 +86,10 @@ func (p *Player) Listen() {
 							}}
 					}
 					p.roomMulti.SendRoomState(message)
+					for _, player := range p.roomMulti.Players {
+						player.RemovePlayerFromRoom()
+						player.RemovePlayerFromGame()
+					}
 				}
 				helpers.LogMsg("Player " + p.ID +" disconnected")
 				metrics.PlayersCountInGame.Dec()
