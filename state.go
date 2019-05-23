@@ -34,6 +34,7 @@ type GameResult string
 const (
 	WIN GameResult = "WIN"
 	LOST GameResult = "LOST"
+	AUTOWIN GameResult = "AUTO-WIN"
 )
 
 type GameCurrentState string

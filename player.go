@@ -49,8 +49,44 @@ func (p *Player) Listen() {
 			err := p.conn.ReadJSON(message)
 			fmt.Println("ReadJSON error: ", err)
 			if websocket.IsUnexpectedCloseError(err) {
+				p.roomMulti.gameState = FINISHED
 				p.RemovePlayerFromRoom()
 				p.RemovePlayerFromGame()
+				if p.roomMulti != nil {
+					message := new(OutcomeMessage)
+					if p.Type == PENGUIN {
+						message = &OutcomeMessage{
+							Type:FINISHGAME,
+							Payload:OutPayloadMessage{
+								Penguin:PenguinMessage{
+									Name: p.roomMulti.state.Penguin.ID,
+									Score: uint(p.roomMulti.state.Penguin.Score),
+								},
+								Gun:GunMessage{
+									Name: p.roomMulti.state.Gun.ID,
+									Score: uint(p.roomMulti.state.Gun.Score),
+									Result: AUTOWIN,
+								},
+								Round: uint(p.roomMulti.state.Round),
+							}}
+					} else {
+						message = &OutcomeMessage{
+							Type:FINISHGAME,
+							Payload:OutPayloadMessage{
+								Penguin:PenguinMessage{
+									Name: p.roomMulti.state.Penguin.ID,
+									Score: uint(p.roomMulti.state.Penguin.Score),
+									Result: AUTOWIN,
+								},
+								Gun:GunMessage{
+									Name: p.roomMulti.state.Gun.ID,
+									Score: uint(p.roomMulti.state.Gun.Score),
+								},
+								Round: uint(p.roomMulti.state.Round),
+							}}
+					}
+					p.roomMulti.SendRoomState(message)
+				}
 				helpers.LogMsg("Player " + p.ID +" disconnected")
 				metrics.PlayersCountInGame.Dec()
 				return
