@@ -61,6 +61,7 @@ func (p *Player) Listen() {
 								Penguin:PenguinMessage{
 									Name: p.roomMulti.state.Penguin.ID,
 									Score: uint(p.roomMulti.state.Penguin.Score),
+									Result: LOST,
 								},
 								Gun:GunMessage{
 									Name: p.roomMulti.state.Gun.ID,
@@ -81,6 +82,7 @@ func (p *Player) Listen() {
 								Gun:GunMessage{
 									Name: p.roomMulti.state.Gun.ID,
 									Score: uint(p.roomMulti.state.Gun.Score),
+									Result: LOST,
 								},
 								Round: uint(p.roomMulti.state.Round),
 							}}
