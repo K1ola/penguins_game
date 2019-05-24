@@ -34,8 +34,8 @@ func NewRoomMulti(MaxPlayers uint, id int) *RoomMulti {
 		Players:    make(map[string]*Player),
 		register:   make(chan *Player),
 		unregister: make(chan *Player),
-		ticker:     time.NewTicker(100 * time.Millisecond),
-		state: &RoomState{
+		ticker:     time.NewTicker(50 * time.Millisecond),
+ 		state: &RoomState{
 			Penguin: new(PenguinState),
 			Gun: new(GunState),
 			Fishes: make(map[int]*FishState, 24),
@@ -48,7 +48,7 @@ func NewRoomMulti(MaxPlayers uint, id int) *RoomMulti {
 }
 
 func (r *RoomMulti) Run() {
-	defer helpers.RecoverPanic()
+	//defer helpers.RecoverPanic()
 	helpers.LogMsg("Room Multi loop started")
 	for {
 		select {
@@ -60,8 +60,8 @@ func (r *RoomMulti) Run() {
 			r.Players[player.ID] = player
 			r.mu.Unlock()
 			helpers.LogMsg("Player " + player.ID + " joined")
-		case message := <- r.broadcast:
-			r.SendRoomState(message)
+		//case message := <- r.broadcast:
+			//r.SendRoomState(message)
 		case <-r.ticker.C:
 			if r.gameState == RUNNING {
 				  message := RunMulti(r)

@@ -40,46 +40,47 @@ func NewPlayer(conn *websocket.Conn, id string, instance *models.User) *Player {
 }
 
 func (p *Player) Listen() {
-	defer helpers.RecoverPanic()
+	//defer helpers.RecoverPanic()
 	go func() {
-		defer helpers.RecoverPanic()
+		//defer helpers.RecoverPanic()
 		for {
 			//слушаем фронт
 			message := &IncomeMessage{}
 			err := p.conn.ReadJSON(message)
 			fmt.Println("ReadJSON error: ", err)
 			if websocket.IsUnexpectedCloseError(err) {
-				p.roomMulti.gameState = FINISHED
+				//if p.roomMulti.gameState != FINISHED {
 				if p.roomMulti != nil {
+					p.roomMulti.gameState = FINISHED
 					message := new(OutcomeMessage)
 					if p.Type == PENGUIN {
 						message = &OutcomeMessage{
-							Type:FINISHGAME,
-							Payload:OutPayloadMessage{
-								Penguin:PenguinMessage{
-									Name: p.roomMulti.state.Penguin.ID,
-									Score: uint(p.roomMulti.state.Penguin.Score),
+							Type: FINISHGAME,
+							Payload: OutPayloadMessage{
+								Penguin: PenguinMessage{
+									Name:   p.roomMulti.state.Penguin.ID,
+									Score:  uint(p.roomMulti.state.Penguin.Score),
 									Result: LOST,
 								},
-								Gun:GunMessage{
-									Name: p.roomMulti.state.Gun.ID,
-									Score: uint(p.roomMulti.state.Gun.Score),
+								Gun: GunMessage{
+									Name:   p.roomMulti.state.Gun.ID,
+									Score:  uint(p.roomMulti.state.Gun.Score),
 									Result: AUTOWIN,
 								},
 								Round: uint(p.roomMulti.state.Round),
 							}}
 					} else {
 						message = &OutcomeMessage{
-							Type:FINISHGAME,
-							Payload:OutPayloadMessage{
-								Penguin:PenguinMessage{
-									Name: p.roomMulti.state.Penguin.ID,
-									Score: uint(p.roomMulti.state.Penguin.Score),
+							Type: FINISHGAME,
+							Payload: OutPayloadMessage{
+								Penguin: PenguinMessage{
+									Name:   p.roomMulti.state.Penguin.ID,
+									Score:  uint(p.roomMulti.state.Penguin.Score),
 									Result: AUTOWIN,
 								},
-								Gun:GunMessage{
-									Name: p.roomMulti.state.Gun.ID,
-									Score: uint(p.roomMulti.state.Gun.Score),
+								Gun: GunMessage{
+									Name:   p.roomMulti.state.Gun.ID,
+									Score:  uint(p.roomMulti.state.Gun.Score),
 									Result: LOST,
 								},
 								Round: uint(p.roomMulti.state.Round),
@@ -91,6 +92,7 @@ func (p *Player) Listen() {
 						player.RemovePlayerFromGame()
 					}
 				}
+			//}
 				helpers.LogMsg("Player " + p.ID +" disconnected")
 				metrics.PlayersCountInGame.Dec()
 				return
