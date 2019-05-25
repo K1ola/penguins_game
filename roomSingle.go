@@ -35,7 +35,7 @@ func NewRoomSingle(MaxPlayers uint, id int) *RoomSingle {
 		Player:    new(Player),
 		register:   make(chan *Player),
 		unregister: make(chan *Player),
-		ticker:     time.NewTicker(10 * time.Millisecond),
+		ticker:     time.NewTicker(100 * time.Millisecond),
 		state: &RoomState{
 			Penguin: new(PenguinState),
 			Gun: new(GunState),
