@@ -41,7 +41,7 @@ func NewGame(maxRooms uint) *Game {
 }
 
 func (g *Game) Run() {
-	//defer helpers.RecoverPanic()
+	defer helpers.RecoverPanic()
 //LOOP:
 	for {
 		select {

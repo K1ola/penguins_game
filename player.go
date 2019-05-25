@@ -40,9 +40,9 @@ func NewPlayer(conn *websocket.Conn, id string, instance *models.User) *Player {
 }
 
 func (p *Player) Listen() {
-	//defer helpers.RecoverPanic()
+	defer helpers.RecoverPanic()
 	go func() {
-		//defer helpers.RecoverPanic()
+		defer helpers.RecoverPanic()
 		for {
 			//слушаем фронт
 			message := &IncomeMessage{}
