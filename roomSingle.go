@@ -67,10 +67,10 @@ func (r *RoomSingle) Run() {
 				message := RunSingle(r)
 				if message.Type != STATE {
 					switch message.Type {
-					case FINISHROUND:
-						fmt.Println(FINISHROUND)
-						fmt.Println(r.gameState)
-						r.StartNewRound()
+					//case FINISHROUND:
+					//	fmt.Println(FINISHROUND)
+					//	fmt.Println(r.gameState)
+					//	r.StartNewRound()
 					case FINISHGAME:
 						//message = r.FinishGame()
 
@@ -78,7 +78,7 @@ func (r *RoomSingle) Run() {
 						r.SaveResult()
 					}
 				}
-				r.Player.out <- message
+				r.SendRoomState(message)
 			}
 		}
 	}
@@ -99,7 +99,6 @@ func (r *RoomSingle) AddPlayer(player *Player) {
 }
 
 func (r *RoomSingle) RemovePlayer(player *Player) {
-	//r.unregister <- player
 	r.Player = nil
 	helpers.LogMsg("Player " + player.ID + " was removed from room")
 }
@@ -130,7 +129,6 @@ func (r *RoomSingle) StartNewRound() {
 					Score: uint(r.state.Gun.Score),
 				},
 				Penguin: PenguinMessage{
-					//Name: penguin,
 					Name: r.state.Penguin.ID,
 					Score: uint(r.state.Penguin.Score),
 				},
@@ -138,7 +136,7 @@ func (r *RoomSingle) StartNewRound() {
 				Round:       uint(r.round),
 			},
 		}
-		r.Player.out <- message
+		r.SendRoomState(message)
 		r.state = CreateInitialStateSingle(r)
 		r.gameState = RUNNING
 }
@@ -161,6 +159,9 @@ func (r *RoomSingle) SaveResult() {
 	ctx := context.Background()
 	_, err = AuthManager.SaveUserGame(ctx, r.Player.instance)
 	fmt.Println(err)
+}
 
+func (r *RoomSingle) SendRoomState(message *OutcomeMessage) {
+	r.Player.out <- message
 }
 

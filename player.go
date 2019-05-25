@@ -92,6 +92,30 @@ func (p *Player) Listen() {
 						player.RemovePlayerFromGame()
 					}
 				}
+
+				if p.roomSingle != nil {
+					p.roomSingle.gameState = FINISHED
+					message := new(OutcomeMessage)
+					message = &OutcomeMessage{
+						Type: FINISHGAME,
+						Payload: OutPayloadMessage{
+							Penguin: PenguinMessage{
+								Name:   p.roomSingle.state.Penguin.ID,
+								Score:  uint(p.roomSingle.state.Penguin.Score),
+								Result: LOST,
+							},
+							Gun: GunMessage{
+								Name:   string(GUN),
+								Score:  uint(p.roomSingle.state.Gun.Score),
+								Result: WIN,
+							},
+							Round: uint(p.roomSingle.state.Round),
+						}}
+					p.roomSingle.SendRoomState(message)
+					p.RemovePlayerFromRoom()
+					p.RemovePlayerFromGame()
+				}
+
 			//}
 				helpers.LogMsg("Player " + p.ID +" disconnected")
 				metrics.PlayersCountInGame.Dec()
@@ -130,13 +154,18 @@ func (p *Player) Listen() {
 					}
 
 				case NEWROUND:
-					if p.roomMulti.gameState == WAITING {
-						fmt.Println(p.roomMulti)
-						p.roomMulti.SendRoomState(&OutcomeMessage{Type: WAIT})
-						p.roomMulti.gameState = INITIALIZED
-						continue
+					switch message.Payload.Mode {
+					case SINGLE:
+						p.roomSingle.StartNewRound()
+					case MULTI:
+						if p.roomMulti.gameState == WAITING {
+							fmt.Println(p.roomMulti)
+							p.roomMulti.SendRoomState(&OutcomeMessage{Type: WAIT})
+							p.roomMulti.gameState = INITIALIZED
+							continue
+						}
+						p.roomMulti.StartNewRound()
 					}
-					p.roomMulti.StartNewRound()
 				default:
 					fmt.Println("Default in Player.Listen() - in")
 			}

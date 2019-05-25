@@ -41,7 +41,7 @@ func NewGame(maxRooms uint) *Game {
 }
 
 func (g *Game) Run() {
-	defer helpers.RecoverPanic()
+	//defer helpers.RecoverPanic()
 //LOOP:
 	for {
 		select {
@@ -61,6 +61,11 @@ func (g *Game) Run() {
 				fmt.Println(len(room.Players))
 				if room != nil && len(room.Players) == 0 {
 					delete(g.roomsMulti, room.ID)
+				}
+			}
+			for _, room := range g.roomsSingle {
+				if room != nil && room.Player == nil {
+					delete(g.roomsSingle, room.ID)
 				}
 			}
 			helpers.LogMsg("Player " + player.ID + " was removed from PingGame")
@@ -148,9 +153,10 @@ func (g *Game) ProcessSingle(player *Player) {
 
 	room.state = CreateInitialStateSingle(room)
 	room.state.Penguin.ID = player.ID
-	room.gameState = RUNNING
-	player.out <- &OutcomeMessage{
-		Type: START,
+	room.gameState = WAITING
+
+	room.SendRoomState(&OutcomeMessage{
+		Type: FINISHROUND,
 		Payload:OutPayloadMessage{
 			Gun:GunMessage{
 				Bullet:BulletMessage{
@@ -167,8 +173,10 @@ func (g *Game) ProcessSingle(player *Player) {
 				Name: player.ID,
 				Result: "",
 			},
+			Round: 1,
+			PiscesCount: 24,
 		},
-	}
+	})
 }
 
 func (g *Game) ProcessMulti(player *Player) {
