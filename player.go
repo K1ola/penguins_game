@@ -23,7 +23,7 @@ type Player struct {
 	Type ClientRole
 	Playing bool
 }
-
+var counter int
 func NewPlayer(conn *websocket.Conn, id string, instance *models.User) *Player {
 	return &Player{
 		instance: instance,
@@ -161,7 +161,13 @@ func (p *Player) Listen() {
 					fmt.Println("Default in Player.Listen() - out")
 				}
 				_ = p.conn.WriteJSON(message)
+			} else {
+				counter++
+				fmt.Println("COUNTER: ", counter)
 			}
+		}
+		if counter > 0 {
+			panic("ddos")
 		}
 	}
 }
