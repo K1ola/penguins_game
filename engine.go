@@ -64,7 +64,7 @@ func RunSingle(room *RoomSingle) *OutcomeMessage {
 	room.state.RecalcGun()
 	msg = room.state.RecalcBullet()
 	if msg != nil {
-		//room.FinishGame()
+		room.FinishGame()
 		return msg
 	}
 	return room.state.GetState()
@@ -73,10 +73,9 @@ func RunSingle(room *RoomSingle) *OutcomeMessage {
 //TODO remove repeat
 func CreateInitialStateSingle(room *RoomSingle) *RoomState {
 	state := new(RoomState)
-	var penguin, gun string
 
-	state.Penguin = CreatePenguin(penguin)
-	state.Gun = CreateGun(gun)
+	state.Penguin = CreatePenguin(room.Player.ID)
+	state.Gun = CreateGun(string(GUN))
 	state.Fishes = CreateFishes()
 	state.Round = room.round
 	var penguinScore, gunScore int
@@ -143,7 +142,7 @@ func (rs *RoomState) RecalcBullet() *OutcomeMessage{
 	if rs.Gun.Bullet.DistanceFromCenter > 100*0.8/2 {
 		if rs.Gun.Bullet.Alpha % 360 >= rs.Penguin.Alpha - 7 && rs.Gun.Bullet.Alpha % 360 <= rs.Penguin.Alpha + 7 {
 
-			//TODO it is single mode logic
+			//it is single mode logic
 			if rs.Gun.ID == string(GUN) {
 				return &OutcomeMessage{
 					Type:FINISHGAME,
@@ -158,7 +157,7 @@ func (rs *RoomState) RecalcBullet() *OutcomeMessage{
 						Round: uint(rs.Round),
 					}}
 			} else {
-				//lost
+				//it is multi mode logic
 				scoreGun := rs.Gun.Score + 1
 				rs.Gun.Score = scoreGun
 				return &OutcomeMessage{
@@ -232,6 +231,7 @@ func (rs *RoomState) RecalcPenguin() *OutcomeMessage{
 		if count == 0 {
 			//if rs.Gun.ID != string(GUN) {
 				// win penguin
+				rs.Round++
 				scorePenguin := rs.Penguin.Score + 1
 				rs.Penguin.Score = scorePenguin
 				return &OutcomeMessage{

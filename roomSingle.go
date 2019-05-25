@@ -67,13 +67,7 @@ func (r *RoomSingle) Run() {
 				message := RunSingle(r)
 				if message.Type != STATE {
 					switch message.Type {
-					//case FINISHROUND:
-					//	fmt.Println(FINISHROUND)
-					//	fmt.Println(r.gameState)
-					//	r.StartNewRound()
 					case FINISHGAME:
-						//message = r.FinishGame()
-
 						r.gameState = FINISHED
 						r.SaveResult()
 					}
