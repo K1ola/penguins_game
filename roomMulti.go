@@ -71,16 +71,17 @@ func (r *RoomMulti) Run() {
 					  		fmt.Println(FINISHROUND)
 					  		fmt.Println(r.gameState)
 					  case FINISHGAME:
-							message = r.FinishGame()
+							//message = r.FinishGame()
 					  }
 				  }
-				  r.SendRoomState(message)
 				if r.round > 3 && r.gameState == FINISHED {
 					message := r.FinishGame()
 					r.SendRoomState(message)
 					//r.gameState = FINISHED
 					r.SaveResult()
 					return
+				} else {
+					r.SendRoomState(message)
 				}
 			}
 		}

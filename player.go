@@ -49,44 +49,44 @@ func (p *Player) Listen() {
 			err := p.conn.ReadJSON(message)
 			fmt.Println("ReadJSON error: ", err)
 			if websocket.IsUnexpectedCloseError(err) {
-				//if p.roomMulti.gameState != FINISHED {
-				if p.roomMulti != nil {
-					p.roomMulti.gameState = FINISHED
-					message := new(OutcomeMessage)
-					if p.Type == PENGUIN {
-						message = &OutcomeMessage{
-							Type: FINISHGAME,
-							Payload: OutPayloadMessage{
-								Penguin: PenguinMessage{
-									Name:   p.roomMulti.state.Penguin.ID,
-									Score:  uint(p.roomMulti.state.Penguin.Score),
-									Result: LOST,
-								},
-								Gun: GunMessage{
-									Name:   p.roomMulti.state.Gun.ID,
-									Score:  uint(p.roomMulti.state.Gun.Score),
-									Result: AUTOWIN,
-								},
-								Round: uint(p.roomMulti.state.Round),
-							}}
-					} else {
-						message = &OutcomeMessage{
-							Type: FINISHGAME,
-							Payload: OutPayloadMessage{
-								Penguin: PenguinMessage{
-									Name:   p.roomMulti.state.Penguin.ID,
-									Score:  uint(p.roomMulti.state.Penguin.Score),
-									Result: AUTOWIN,
-								},
-								Gun: GunMessage{
-									Name:   p.roomMulti.state.Gun.ID,
-									Score:  uint(p.roomMulti.state.Gun.Score),
-									Result: LOST,
-								},
-								Round: uint(p.roomMulti.state.Round),
-							}}
+				if p.roomMulti != nil  {
+					if p.roomMulti.gameState != FINISHED {
+						message := new(OutcomeMessage)
+						if p.Type == PENGUIN {
+							message = &OutcomeMessage{
+								Type: FINISHGAME,
+								Payload: OutPayloadMessage{
+									Penguin: PenguinMessage{
+										Name:   p.roomMulti.state.Penguin.ID,
+										Score:  uint(p.roomMulti.state.Penguin.Score),
+										Result: LOST,
+									},
+									Gun: GunMessage{
+										Name:   p.roomMulti.state.Gun.ID,
+										Score:  uint(p.roomMulti.state.Gun.Score),
+										Result: AUTOWIN,
+									},
+									Round: uint(p.roomMulti.state.Round),
+								}}
+						} else {
+							message = &OutcomeMessage{
+								Type: FINISHGAME,
+								Payload: OutPayloadMessage{
+									Penguin: PenguinMessage{
+										Name:   p.roomMulti.state.Penguin.ID,
+										Score:  uint(p.roomMulti.state.Penguin.Score),
+										Result: AUTOWIN,
+									},
+									Gun: GunMessage{
+										Name:   p.roomMulti.state.Gun.ID,
+										Score:  uint(p.roomMulti.state.Gun.Score),
+										Result: LOST,
+									},
+									Round: uint(p.roomMulti.state.Round),
+								}}
+						}
+						p.roomMulti.SendRoomState(message)
 					}
-					p.roomMulti.SendRoomState(message)
 					for _, player := range p.roomMulti.Players {
 						player.RemovePlayerFromRoom()
 						player.RemovePlayerFromGame()
@@ -116,10 +116,10 @@ func (p *Player) Listen() {
 					p.RemovePlayerFromGame()
 				}
 
-			//}
 				helpers.LogMsg("Player " + p.ID +" disconnected")
 				metrics.PlayersCountInGame.Dec()
 				return
+			//}
 			}
 			if err != nil {
 				log.Printf("Cannot read json")
