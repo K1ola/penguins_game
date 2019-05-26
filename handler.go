@@ -30,7 +30,7 @@ func StartSingle(w http.ResponseWriter, r *http.Request) {
 		ctx := context.Background()
 
 		user, _ = models.AuthManager.GetUser(ctx, &models.JWT{Token: cookie.Value})
-		cookie.Value = user.Login
+		//cookie.Value = user.Login
 	}
 
 	upgrader := &websocket.Upgrader{}

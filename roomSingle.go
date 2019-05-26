@@ -159,3 +159,6 @@ func (r *RoomSingle) SendRoomState(message *OutcomeMessage) {
 	r.Player.out <- message
 }
 
+
+
+

@@ -144,6 +144,8 @@ func (rs *RoomState) RecalcBullet() *OutcomeMessage{
 
 			//it is single mode logic
 			if rs.Gun.ID == string(GUN) {
+				scorePenguin := rs.Penguin.Score + 1
+				rs.Penguin.Score = scorePenguin
 				return &OutcomeMessage{
 					Type:FINISHGAME,
 					Payload:OutPayloadMessage{
