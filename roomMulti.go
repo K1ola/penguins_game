@@ -198,7 +198,7 @@ func (r *RoomMulti) FinishRound() {
 	}
 	r.gameState = WAITING
 	if r.round > 3 {
-			r.gameState = FINISHED
+		r.gameState = FINISHED
 	}
 }
 
@@ -245,6 +245,8 @@ func (r *RoomMulti) StartNewRound() {
 	} else {
 		if r.round > 3 {
 			message := r.FinishGame()
+			currentPlayer = ""
+			r.round = 1
 			r.SendRoomState(message)
 			//r.gameState = FINISHED
 		}
