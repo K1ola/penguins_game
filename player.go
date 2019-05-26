@@ -24,6 +24,7 @@ type Player struct {
 	Playing bool
 }
 var counter int
+var currentPlayer string
 func NewPlayer(conn *websocket.Conn, id string, instance *models.User) *Player {
 	return &Player{
 		instance: instance,
@@ -139,9 +140,11 @@ func (p *Player) Listen() {
 				case NEWPLAYER:
 					//стартовая инициализация, производится строго вначале один раз
 					if message.Payload.Mode != "" {
-						p.GameMode = message.Payload.Mode
-						//p.ID = message.Payload.Name
-						PingGame.AddPlayer(p)
+						if currentPlayer != p.ID {
+							p.GameMode = message.Payload.Mode
+							PingGame.AddPlayer(p)
+						}
+						currentPlayer = p.ID
 					}
 				case NEWCOMMAND:
 					//get name, do rotate
@@ -158,10 +161,11 @@ func (p *Player) Listen() {
 					case SINGLE:
 						p.roomSingle.StartNewRound()
 					case MULTI:
-						if p.roomMulti.gameState == WAITING {
+						if p.roomMulti.gameState == WAITING  {
 							fmt.Println(p.roomMulti)
 							p.roomMulti.SendRoomState(&OutcomeMessage{Type: WAIT})
 							p.roomMulti.gameState = INITIALIZED
+							//currentPlayer = p.ID
 							continue
 						}
 						p.roomMulti.StartNewRound()

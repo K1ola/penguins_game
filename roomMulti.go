@@ -217,7 +217,7 @@ func (r *RoomMulti) SendRoomState(message *OutcomeMessage) {
 }
 
 func (r *RoomMulti) StartNewRound() {
-	time.Sleep(1000 * time.Millisecond)
+	//time.Sleep(1000 * time.Millisecond)
 	if r.state != nil && r.round <= 3 {
 		r.round += 1
 		r.state.Round = r.round
