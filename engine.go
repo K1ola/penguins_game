@@ -242,10 +242,12 @@ func (rs *RoomState) RecalcPenguin() *OutcomeMessage{
 						Penguin:PenguinMessage{
 							Name: rs.Penguin.ID,
 							Score: uint(scorePenguin),
+							Result:LOST,
 						},
 						Gun:GunMessage{
 							Name: rs.Gun.ID,
 							Score: uint(rs.Gun.Score),
+							Result:LOST,
 						},
 						Round: uint(rs.Round),
 					}}
