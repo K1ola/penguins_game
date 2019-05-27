@@ -48,7 +48,7 @@ func NewRoomMulti(MaxPlayers uint, id int) *RoomMulti {
 }
 
 func (r *RoomMulti) Run() {
-	defer helpers.RecoverPanic()
+	//defer helpers.RecoverPanic()
 	helpers.LogMsg("Room Multi loop started")
 	for {
 		select {
@@ -111,7 +111,7 @@ func (r *RoomMulti) RemovePlayer(player *Player) {
 func (r *RoomMulti) SelectPlayersRoles() (string, string) {
 	var penguin, gun string
 	digit := rand.Intn(2)
-	time.Sleep(100* time.Millisecond)
+	time.Sleep(10* time.Millisecond)
 	for _, player := range r.Players {
 		if digit == 0 {
 			player.Type = PENGUIN

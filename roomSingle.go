@@ -49,7 +49,7 @@ func NewRoomSingle(MaxPlayers uint, id int) *RoomSingle {
 }
 
 func (r *RoomSingle) Run() {
-	defer helpers.RecoverPanic()
+	//defer helpers.RecoverPanic()
 	helpers.LogMsg("Room Single loop started")
 	for {
 		select {

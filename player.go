@@ -41,9 +41,9 @@ func NewPlayer(conn *websocket.Conn, id string, instance *models.User) *Player {
 }
 
 func (p *Player) Listen() {
-	defer helpers.RecoverPanic()
+	//defer helpers.RecoverPanic()
 	go func() {
-		defer helpers.RecoverPanic()
+		//defer helpers.RecoverPanic()
 		for {
 			//слушаем фронт
 			message := &IncomeMessage{}
@@ -140,11 +140,8 @@ func (p *Player) Listen() {
 				case NEWPLAYER:
 					//стартовая инициализация, производится строго вначале один раз
 					if message.Payload.Mode != "" {
-						if currentPlayer != p.ID {
 							p.GameMode = message.Payload.Mode
 							PingGame.AddPlayer(p)
-						}
-						currentPlayer = p.ID
 					}
 				case NEWCOMMAND:
 					//get name, do rotate
