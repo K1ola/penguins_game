@@ -62,6 +62,8 @@ func main() {
 	router.Handle("/metrics", promhttp.Handler())
 	gameRouter.HandleFunc("/single", StartSingle)
 	gameRouter.HandleFunc("/multi", StartMulti)
+	gameRouter.HandleFunc("/checkSingleWs", CheckWsSingle)
+	gameRouter.HandleFunc("/checkMultiWs", CheckWsMulti)
 
 	helpers.LogMsg("GameServer started at", port)
 

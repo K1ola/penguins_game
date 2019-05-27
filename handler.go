@@ -12,8 +12,9 @@ import (
 )
 
 var AuthManager models.AuthCheckerClient
+var user *models.User
 
-func StartSingle(w http.ResponseWriter, r *http.Request) {
+func CheckWsSingle(w http.ResponseWriter, r *http.Request) {
 	if PingGame.RoomsCount() >= 10 {
 		//TODO check response on the client side
 		helpers.LogMsg("Too many clients")
@@ -22,52 +23,19 @@ func StartSingle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := new(models.User)
+	user = new(models.User)
+
 	cookie, err := r.Cookie("sessionid")
 	if err != nil || cookie.Value == "" {
 		user.Login = "Anonumys"
 	} else {
 		ctx := context.Background()
-
 		user, _ = models.AuthManager.GetUser(ctx, &models.JWT{Token: cookie.Value})
-		//cookie.Value = user.Login
 	}
-
-	upgrader := &websocket.Upgrader{}
-
-	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		helpers.LogMsg("Connection error: ", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	helpers.LogMsg("Connected to client")
-
-	//grcpConn, err := grpc.Dial(
-	//	"127.0.0.1:8083",
-	//	grpc.WithInsecure(),
-	//)
-	//if err != nil {
-	//	helpers.LogMsg("Can`t connect to grpc")
-	//	w.WriteHeader(http.StatusInternalServerError)
-	//	return
-	//}
-	//defer grcpConn.Close()
-	//
-	//AuthManager = models.NewAuthCheckerClient(grcpConn)
-
-	//ctx := context.Background()
-	//_, _ = AuthManager.ChangeUser(ctx, user)
-
-	//TODO remove hardcore, get from front player value
-	player := NewPlayer(conn, user.Login, user)
-	player.ID = user.Login
-	go player.Listen()
+	w.WriteHeader(http.StatusOK)
 }
 
-func StartMulti(w http.ResponseWriter, r *http.Request) {
+func CheckWsMulti(w http.ResponseWriter, r *http.Request) {
 	if PingGame.RoomsCount() >= 10 {
 		//TODO check response on the client side
 		helpers.LogMsg("Too many clients")
@@ -76,7 +44,8 @@ func StartMulti(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var user *models.User
+	user = new(models.User)
+
 	cookie, err := r.Cookie("sessionid")
 	if err != nil || cookie.Value == "" {
 		helpers.LogMsg("No Cookie in Multi")
@@ -102,10 +71,30 @@ func StartMulti(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
+	}
+	w.WriteHeader(http.StatusOK)
+}
 
-		//cookie.Value = user.Login
+func StartSingle(w http.ResponseWriter, r *http.Request) {
+	upgrader := &websocket.Upgrader{}
+
+	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		helpers.LogMsg("Connection error: ", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
+	helpers.LogMsg("Connected to client")
+
+	//TODO remove hardcore, get from front player value
+	player := NewPlayer(conn, user.Login, user)
+	player.ID = user.Login
+	go player.Listen()
+}
+
+func StartMulti(w http.ResponseWriter, r *http.Request) {
 	upgrader := &websocket.Upgrader{}
 
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
