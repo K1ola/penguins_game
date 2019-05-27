@@ -45,8 +45,11 @@ func CheckWsMulti(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user = new(models.User)
-
+	
 	cookie, err := r.Cookie("sessionid")
+	fmt.Println(cookie)
+	// fmt.Println(cookie.Value)
+
 	if err != nil || cookie.Value == "" {
 		helpers.LogMsg("No Cookie in Multi")
 		w.WriteHeader(http.StatusUnauthorized)

@@ -53,6 +53,8 @@ func main() {
 
 	router := mux.NewRouter()
 	gameRouter := router.PathPrefix("/game").Subrouter()
+	userRouter := router.PathPrefix("/data").Subrouter()
+
 	//TODO
 	//router.Use(mw.PanicMiddleware)
 	gameRouter.Use(mw.CORSMiddleware)
@@ -63,8 +65,8 @@ func main() {
 	router.Handle("/metrics", promhttp.Handler())
 	gameRouter.HandleFunc("/single", StartSingle)
 	gameRouter.HandleFunc("/multi", StartMulti)
-	gameRouter.HandleFunc("/checkSingleWs", CheckWsSingle)
-	gameRouter.HandleFunc("/checkMultiWs", CheckWsMulti)
+	userRouter.HandleFunc("/checkSingleWs", CheckWsSingle).Methods("GET", "OPTIONS")
+	userRouter.HandleFunc("/checkMultiWs", CheckWsMulti).Methods("GET", "OPTIONS")
 
 	helpers.LogMsg("GameServer started at", port)
 
