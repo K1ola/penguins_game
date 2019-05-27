@@ -15,13 +15,13 @@ var SECRET = []byte("myawesomesecret")
 
 func CORSMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		origin := r.Header.Get("Origin")
+		//origin := r.Header.Get("Origin")
 
 		responseHeader := w.Header()
 		responseHeader.Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 		responseHeader.Set("Access-Control-Allow-Credentials", "true")
 		responseHeader.Set("Access-Control-Allow-Headers", "Content-Type")
-		responseHeader.Set("Access-Control-Allow-Origin", origin)
+		responseHeader.Set("Access-Control-Allow-Origin", "http://localhost")
 
 		if r.Method == "OPTIONS" {
 			return
