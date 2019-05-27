@@ -55,7 +55,7 @@ func main() {
 	gameRouter := router.PathPrefix("/game").Subrouter()
 	//TODO
 	//router.Use(mw.PanicMiddleware)
-	router.Use(mw.CORSMiddleware)
+	gameRouter.Use(mw.CORSMiddleware)
 	//router.Use(mw.AuthMiddleware)
 
 	//router.HandleFunc("/", RootHandler)
