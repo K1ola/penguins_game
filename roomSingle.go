@@ -35,7 +35,7 @@ func NewRoomSingle(MaxPlayers uint, id int) *RoomSingle {
 		Player:    new(Player),
 		register:   make(chan *Player),
 		unregister: make(chan *Player),
-		ticker:     time.NewTicker(100 * time.Millisecond),
+		ticker:     time.NewTicker(50 * time.Millisecond),
 		state: &RoomState{
 			Penguin: new(PenguinState),
 			Gun: new(GunState),
@@ -70,6 +70,10 @@ func (r *RoomSingle) Run() {
 					case FINISHGAME:
 						r.gameState = FINISHED
 						r.SaveResult()
+						//r.unregister <- r.Player
+						r.SendRoomState(message)
+						r.Player.game.unregister <- r.Player
+						return
 					}
 				}
 				r.SendRoomState(message)
@@ -109,7 +113,7 @@ func (r *RoomSingle) FinishRound() {
 }
 
 func (r *RoomSingle) FinishGame() {
-	helpers.LogMsg("Player " + r.Player.ID + " finished round")
+	helpers.LogMsg("Player " + r.Player.ID + " finished game")
 	r.gameState = FINISHED
 }
 

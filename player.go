@@ -32,7 +32,7 @@ func NewPlayer(conn *websocket.Conn, id string, instance *models.User) *Player {
 		ID:   id,
 		game: PingGame,
 		in:   make(chan *IncomeMessage),
-		out:  make(chan *OutcomeMessage, 1),
+		out:  make(chan *OutcomeMessage, 100),
 		roomMulti: nil,
 		roomSingle: nil,
 		Type: PENGUIN,
