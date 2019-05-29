@@ -7,6 +7,7 @@ import (
 	"game/metrics"
 	"game/models"
 	"github.com/gorilla/websocket"
+	"golang.org/x/net/context"
 	"log"
 )
 
@@ -25,11 +26,11 @@ type Player struct {
 }
 var counter int
 var currentPlayer string
-func NewPlayer(conn *websocket.Conn, id string, instance *models.User) *Player {
+func NewPlayer(conn *websocket.Conn) *Player {
 	return &Player{
-		instance: instance,
+		instance: new(models.User),
 		conn: conn,
-		ID:   id,
+		ID:   "",
 		game: PingGame,
 		in:   make(chan *IncomeMessage),
 		out:  make(chan *OutcomeMessage, 100),
@@ -141,6 +142,17 @@ func (p *Player) Listen() {
 					//стартовая инициализация, производится строго вначале один раз
 					if message.Payload.Mode != "" {
 							p.GameMode = message.Payload.Mode
+							p.ID = message.Payload.Name
+							ctx := context.Background()
+
+							user = new(models.User)
+							user.Login = p.ID
+							p.instance, _ =  models.AuthManager.GetUserForGame(ctx, user)
+							if p.instance == nil {
+								p.instance = user
+								p.ID = "Anonumys"
+							}
+							//TODO check for same users
 							PingGame.AddPlayer(p)
 					}
 				case NEWCOMMAND:
