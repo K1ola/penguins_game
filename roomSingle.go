@@ -1,13 +1,17 @@
 package main
 
 import (
+	"fmt"
+	"game/helpers"
+	"game/models"
+	"golang.org/x/net/context"
 	//"game/helpers"
 	"sync"
 	"time"
 )
 
 type RoomSingle struct {
-	ID         string
+	ID         int
 	MaxPlayers uint
 	Player     *Player
 	mu         sync.Mutex
@@ -15,22 +19,28 @@ type RoomSingle struct {
 	unregister chan *Player
 	ticker     *time.Ticker
 	state      *RoomState
+	gameState GameCurrentState
+	round int
 
 	broadcast chan *OutcomeMessage
 	finish chan *Player
 }
 
-func NewRoomSingle(MaxPlayers uint) *RoomSingle {
+func NewRoomSingle(MaxPlayers uint, id int) *RoomSingle {
 	return &RoomSingle{
+		ID: id,
 		MaxPlayers: MaxPlayers,
 		Player:    new(Player),
 		register:   make(chan *Player),
 		unregister: make(chan *Player),
-		ticker:     time.NewTicker(2 * time.Second),
+		ticker:     time.NewTicker(50 * time.Millisecond),
 		state: &RoomState{
 			Penguin: new(PenguinState),
+			Gun: new(GunState),
 			Fishes: make(map[int]*FishState, 24),
+			Round: 1,
 		},
+		round: 1,
 		broadcast: make(chan *OutcomeMessage, 1),
 		finish: make(chan *Player),
 	}
@@ -38,28 +48,34 @@ func NewRoomSingle(MaxPlayers uint) *RoomSingle {
 
 func (r *RoomSingle) Run() {
 	//defer helpers.RecoverPanic()
-	LogMsg("Room Single loop started")
-	//r.state.Gun.Bullet = CreateBullet(r)
-	//GameInit(r)
+	helpers.LogMsg("Room Single loop started")
 	for {
 		select {
 		case player := <-r.unregister:
 			r.Player = nil
-			LogMsg("Player " + player.ID + " was removed from room")
+			helpers.LogMsg("Player " + player.ID + " was removed from room")
 		case player := <-r.register:
 			r.mu.Lock()
 			r.Player = player
 			r.mu.Unlock()
-			LogMsg("Player " + player.ID + " joined")
+			helpers.LogMsg("Player " + player.ID + " joined")
 			//r.Player.out <- &OutcomeMessage{Type:START}
 		case <-r.ticker.C:
-			r.broadcast <- &OutcomeMessage{Type:STATE}
-			//ProcessGameSingle(r)
-		case player := <- r.finish:
-			LogMsg("Player " + player.ID + " finished game")
-			player.out <- &OutcomeMessage{Type:FINISH}
-			r.state.Penguin = nil
-			//FinishGame(r)
+			if r.gameState == RUNNING {
+				message := RunSingle(r)
+				if message.Type != STATE {
+					switch message.Type {
+					case FINISHGAME:
+						r.gameState = FINISHED
+						r.SaveResult()
+						//r.unregister <- r.Player
+						r.SendRoomState(message)
+						r.Player.game.unregister <- r.Player
+						return
+					}
+				}
+				r.SendRoomState(message)
+			}
 		}
 	}
 }
@@ -79,5 +95,60 @@ func (r *RoomSingle) AddPlayer(player *Player) {
 }
 
 func (r *RoomSingle) RemovePlayer(player *Player) {
-	r.unregister <- player
+	r.Player = nil
+	helpers.LogMsg("Player " + player.ID + " was removed from room")
 }
+
+
+func (r *RoomSingle) ProcessCommand(message *IncomeMessage) {
+	r.state.RotatePenguin()
+}
+
+func (r *RoomSingle) FinishRound() {
+	r.round++
+	helpers.LogMsg("Player " + r.Player.ID + " finished round")
+	r.gameState = WAITING
+}
+
+func (r *RoomSingle) FinishGame() {
+	helpers.LogMsg("Player " + r.Player.ID + " finished game")
+	r.gameState = FINISHED
+}
+
+func (r *RoomSingle) StartNewRound() {
+	//time.Sleep(500 * time.Millisecond)
+		message := &OutcomeMessage{
+			Type: START,
+			Payload: OutPayloadMessage{
+				Gun: GunMessage{
+					Name: string(GUN),
+					Score: uint(r.state.Gun.Score),
+				},
+				Penguin: PenguinMessage{
+					Name: r.state.Penguin.ID,
+					Score: uint(r.state.Penguin.Score),
+				},
+				PiscesCount: 24,
+				Round:       uint(r.round),
+			},
+		}
+		r.SendRoomState(message)
+		r.state = CreateInitialStateSingle(r)
+		r.gameState = RUNNING
+}
+
+func (r *RoomSingle) SaveResult() {
+	r.Player.instance.Score = uint64(r.Player.roomSingle.state.Penguin.Score)
+	fmt.Println(r.Player.Type)
+	ctx := context.Background()
+	_, err := models.AuthManager.SaveUserGame(ctx, r.Player.instance)
+	fmt.Println(err)
+}
+
+func (r *RoomSingle) SendRoomState(message *OutcomeMessage) {
+	r.Player.out <- message
+}
+
+
+
+

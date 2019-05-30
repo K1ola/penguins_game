@@ -3,6 +3,7 @@ package main
 import (
 	"game/helpers"
 	"game/metrics"
+	mw "game/middleware"
 	"game/models"
 	"google.golang.org/grpc"
 	"net/http"
@@ -52,9 +53,11 @@ func main() {
 
 	router := mux.NewRouter()
 	gameRouter := router.PathPrefix("/game").Subrouter()
+	//userRouter := router.PathPrefix("/data").Subrouter()
+
 	//TODO
 	//router.Use(mw.PanicMiddleware)
-	//router.Use(mw.CORSMiddleware)
+	gameRouter.Use(mw.CORSMiddleware)
 	//router.Use(mw.AuthMiddleware)
 
 	//router.HandleFunc("/", RootHandler)
@@ -62,8 +65,10 @@ func main() {
 	router.Handle("/metrics", promhttp.Handler())
 	gameRouter.HandleFunc("/single", StartSingle)
 	gameRouter.HandleFunc("/multi", StartMulti)
+	//userRouter.HandleFunc("/checkSingleWs", CheckWsSingle).Methods("GET", "OPTIONS")
+	//userRouter.HandleFunc("/checkMultiWs", CheckWsMulti).Methods("GET", "OPTIONS")
 
-	LogMsg("GameServer started at", port)
+	helpers.LogMsg("GameServer started at", port)
 
 	http.ListenAndServe(port, handlers.LoggingHandler(os.Stdout, router))
 }

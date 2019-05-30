@@ -3,31 +3,41 @@ package main
 import (
 	//"game/helpers"
 	"fmt"
+	"game/helpers"
 	"game/metrics"
+	"game/models"
 	"github.com/gorilla/websocket"
+	"golang.org/x/net/context"
 	"log"
 )
 
 type Player struct {
+	instance *models.User
 	conn *websocket.Conn
 	ID   string
+	game *Game
 	in   chan *IncomeMessage
 	out  chan *OutcomeMessage
 	roomSingle *RoomSingle
 	roomMulti *RoomMulti
-	GameMode string
-	Type string
+	GameMode GameMode
+	Type ClientRole
+	Playing bool
 }
+var counter int
 
-func NewPlayer(conn *websocket.Conn, id string) *Player {
+func NewPlayer(conn *websocket.Conn) *Player {
 	return &Player{
+		instance: new(models.User),
 		conn: conn,
-		ID:   id,
+		ID:   "",
+		game: PingGame,
 		in:   make(chan *IncomeMessage),
-		out:  make(chan *OutcomeMessage, 1),
+		out:  make(chan *OutcomeMessage, 100),
 		roomMulti: nil,
 		roomSingle: nil,
 		Type: PENGUIN,
+		Playing:false,
 	}
 }
 
@@ -41,8 +51,76 @@ func (p *Player) Listen() {
 			err := p.conn.ReadJSON(message)
 			fmt.Println("ReadJSON error: ", err)
 			if websocket.IsUnexpectedCloseError(err) {
-				p.RemovePlayerFromRoom()
-				LogMsg("Player " + p.ID +" disconnected")
+				if p.roomMulti != nil  {
+					if p.roomMulti.gameState != FINISHED {
+						message := new(OutcomeMessage)
+						if p.Type == PENGUIN {
+							message = &OutcomeMessage{
+								Type: FINISHGAME,
+								Payload: OutPayloadMessage{
+									Penguin: PenguinMessage{
+										Name:   p.roomMulti.state.Penguin.ID,
+										Score:  uint(p.roomMulti.state.Penguin.Score),
+										Result: LOST,
+									},
+									Gun: GunMessage{
+										Name:   p.roomMulti.state.Gun.ID,
+										Score:  uint(p.roomMulti.state.Gun.Score),
+										Result: AUTOWIN,
+									},
+									Round: uint(p.roomMulti.state.Round),
+								}}
+						} else {
+							message = &OutcomeMessage{
+								Type: FINISHGAME,
+								Payload: OutPayloadMessage{
+									Penguin: PenguinMessage{
+										Name:   p.roomMulti.state.Penguin.ID,
+										Score:  uint(p.roomMulti.state.Penguin.Score),
+										Result: AUTOWIN,
+									},
+									Gun: GunMessage{
+										Name:   p.roomMulti.state.Gun.ID,
+										Score:  uint(p.roomMulti.state.Gun.Score),
+										Result: LOST,
+									},
+									Round: uint(p.roomMulti.state.Round),
+								}}
+						}
+						p.roomMulti.SendRoomState(message)
+					}
+					p.roomMulti.SaveResult()
+					for _, player := range p.roomMulti.Players {
+						player.RemovePlayerFromRoom()
+						player.RemovePlayerFromGame()
+					}
+				}
+
+				if p.roomSingle != nil {
+					p.roomSingle.gameState = FINISHED
+					message := new(OutcomeMessage)
+					message = &OutcomeMessage{
+						Type: FINISHGAME,
+						Payload: OutPayloadMessage{
+							Penguin: PenguinMessage{
+								Name:   p.roomSingle.state.Penguin.ID,
+								Score:  uint(p.roomSingle.state.Penguin.Score),
+								Result: LOST,
+							},
+							Gun: GunMessage{
+								Name:   string(GUN),
+								Score:  uint(p.roomSingle.state.Gun.Score),
+								Result: WIN,
+							},
+							Round: uint(p.roomSingle.state.Round),
+						}}
+					p.roomSingle.SendRoomState(message)
+					p.roomSingle.SaveResult()
+					p.RemovePlayerFromRoom()
+					p.RemovePlayerFromGame()
+				}
+
+				helpers.LogMsg("Player " + p.ID +" disconnected")
 				metrics.PlayersCountInGame.Dec()
 				return
 			}
@@ -64,15 +142,42 @@ func (p *Player) Listen() {
 				case NEWPLAYER:
 					//стартовая инициализация, производится строго вначале один раз
 					if message.Payload.Mode != "" {
-						p.GameMode = message.Payload.Mode
-						//p.ID = message.Payload.Name
-						PingGame.AddPlayer(p)
+							p.GameMode = message.Payload.Mode
+							p.ID = message.Payload.Name
+							ctx := context.Background()
+
+							user = new(models.User)
+							user.Login = p.ID
+							p.instance, _ =  models.AuthManager.GetUserForGame(ctx, user)
+							if p.instance == nil {
+								p.instance = user
+								p.ID = "Anonumys"
+							}
+							//TODO check for same users
+							PingGame.AddPlayer(p)
 					}
 				case NEWCOMMAND:
 					//get name, do rotate
 					//TODO select game mode
-					p.roomMulti.ProcessCommand(message)
+					if message.Payload.Mode == MULTI {
+						p.roomMulti.ProcessCommand(message)
+					}
+					if message.Payload.Mode == SINGLE {
+						p.roomSingle.ProcessCommand(message)
+					}
 
+				case NEWROUND:
+					switch message.Payload.Mode {
+					case SINGLE:
+						p.roomSingle.StartNewRound()
+					case MULTI:
+						if p.roomMulti.gameState == WAITING  {
+							p.roomMulti.SendRoomState(&OutcomeMessage{Type: WAIT})
+							p.roomMulti.gameState = INITIALIZED
+							continue
+						}
+						p.roomMulti.StartNewRound()
+					}
 				default:
 					fmt.Println("Default in Player.Listen() - in")
 			}
@@ -81,19 +186,29 @@ func (p *Player) Listen() {
 			fmt.Printf("Back says: %#v", message)
 			fmt.Println("")
 			//шлем всем фронтам текущее состояние
-			switch message.Type {
+			if message != nil {
+				switch message.Type {
 				case START:
 					fmt.Println("Process START")
 				case WAIT:
 					fmt.Println("Process WAIT")
-				case FINISH:
-					fmt.Println("Process FINISH")
+				case FINISHROUND:
+					fmt.Println("Process FINISH ROUND")
+				case FINISHGAME:
+					fmt.Println("Process FINISH GAME")
 				case STATE:
 					fmt.Println("Process STATE")
 				default:
 					fmt.Println("Default in Player.Listen() - out")
+				}
+				_ = p.conn.WriteJSON(message)
+			} else {
+				counter++
+				fmt.Println("COUNTER: ", counter)
 			}
-			_ = p.conn.WriteJSON(message)
+		}
+		if counter > 0 {
+			panic("ddos")
 		}
 	}
 }
@@ -107,13 +222,27 @@ func (p *Player) RemovePlayerFromRoom() {
 	}
 }
 
-func (p *Player) Finish() {
+func (p *Player) RemovePlayerFromGame() {
+	p.game.unregister <- p
+}
+
+func (p *Player) FinishGame() {
 	if p.roomSingle != nil {
 		//TODO finish single
 		//p.roomSingle.(p)
 	}
 	if p.roomMulti != nil {
-		p.roomMulti.FinishGame(p)
+		p.roomMulti.FinishGame()
+	}
+}
+
+func (p *Player) FinishRound() {
+	if p.roomSingle != nil {
+		//TODO finish single
+		//p.roomSingle.(p)
+	}
+	if p.roomMulti != nil {
+		p.roomMulti.FinishRound()
 	}
 }
 

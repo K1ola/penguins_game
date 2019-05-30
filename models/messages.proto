@@ -5,6 +5,7 @@ syntax = "proto3";
 
 // then this:
 // ls *.pb.go | xargs -n1 -IX bash -c "sed -e '/uint64/ s/,omitempty//' X > X.tmp && mv X{.tmp,}"
+// ls *.pb.go | xargs -n1 -IX bash -c "sed -e '/bool/ s/,omitempty//' X > X.tmp && mv X{.tmp,}"
 
 package models;
 
@@ -17,6 +18,7 @@ message User {
     uint64 score = 6;
     string picture = 7;
     uint64 count = 8;
+    bool isPlaying = 9;
 }
 
 message UsersArray {
@@ -43,5 +45,10 @@ service AuthChecker {
     rpc GetUserArray (LeadersInfo) returns (UsersArray) {}
     rpc GetUserCountInfo (Nothing) returns (LeadersInfo) {}
     rpc ChangeUser (User) returns (Nothing) {}
+    rpc ChangeUserPicture (User) returns (Nothing) {}
     rpc DeleteUser (JWT) returns (Nothing) {}
+    rpc SaveUserGame (User) returns (Nothing) {}
+    rpc AddUserToGame(User) returns (Nothing) {}
+    rpc GetUserForGame(User) returns (User) {}
+    rpc DeleteUserFromGame(User) returns (Nothing) {}
 }
