@@ -5,7 +5,6 @@ import (
 	"game/helpers"
 	"game/models"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
 	"math/rand"
 	"sync"
 	"time"
@@ -74,11 +73,10 @@ func (r *RoomMulti) Run() {
 							//message = r.FinishGame()
 					  }
 				  }
-				if r.round > 3 && r.gameState == FINISHED {
+				if r.round > LastRound && r.gameState == FINISHED {
+					r.SaveResult()
 					message := r.FinishGame()
 					r.SendRoomState(message)
-					//r.gameState = FINISHED
-					r.SaveResult()
 					return
 				} else {
 					r.SendRoomState(message)
@@ -146,12 +144,13 @@ func (r *RoomMulti) ProcessCommand(message *IncomeMessage) {
 }
 
 func (r *RoomMulti) FinishGame() *OutcomeMessage {
+	message := new(OutcomeMessage)
 	for _, player := range r.Players {
 		helpers.LogMsg("Player " + player.ID + " finished game")
 	}
 	//r.gameState = FINISHED
 	if r.state.Penguin.Score > r.state.Gun.Score {
-		message := &OutcomeMessage{
+		message = &OutcomeMessage{
 			Type: FINISHGAME,
 			Payload: OutPayloadMessage{
 				Penguin: PenguinMessage{
@@ -168,9 +167,10 @@ func (r *RoomMulti) FinishGame() *OutcomeMessage {
 		}
 
 		r.gameState = FINISHED
-		return message
+		r.round = 1
+		r.state.Round = 1
 	} else {
-		message := &OutcomeMessage{
+		message = &OutcomeMessage{
 			Type: FINISHGAME,
 			Payload: OutPayloadMessage{
 				Penguin: PenguinMessage{
@@ -186,10 +186,10 @@ func (r *RoomMulti) FinishGame() *OutcomeMessage {
 			},
 		}
 		r.gameState = FINISHED
-		return message
+		r.round = 1
+		r.state.Round = 1
 	}
-	//r.state.Penguin = nil
-	//r.state.Gun = nil
+	return  message
 }
 
 func (r *RoomMulti) FinishRound() {
@@ -197,7 +197,7 @@ func (r *RoomMulti) FinishRound() {
 		helpers.LogMsg("Player " + player.ID + " finished round")
 	}
 	r.gameState = WAITING
-	if r.round > 3 {
+	if r.round > LastRound {
 		r.gameState = FINISHED
 	}
 }
@@ -218,7 +218,7 @@ func (r *RoomMulti) SendRoomState(message *OutcomeMessage) {
 
 func (r *RoomMulti) StartNewRound() {
 	//time.Sleep(1000 * time.Millisecond)
-	if r.state != nil && r.round <= 3 {
+	if r.state != nil && r.round <= LastRound {
 		r.round += 1
 		r.state.Round = r.round
 		//penguin, gun := r.SelectPlayersRoles()
@@ -243,9 +243,8 @@ func (r *RoomMulti) StartNewRound() {
 		r.state = CreateInitialState(r)
 		r.gameState = RUNNING
 	} else {
-		if r.round > 3 {
+		if r.round > LastRound {
 			message := r.FinishGame()
-			currentPlayer = ""
 			r.round = 1
 			r.SendRoomState(message)
 			//r.gameState = FINISHED
@@ -254,19 +253,8 @@ func (r *RoomMulti) StartNewRound() {
 }
 
 func (r *RoomMulti) SaveResult() {
-	//TODO do it correctly and once
-	grcpConn, err := grpc.Dial(
-		"127.0.0.1:8083",
-		grpc.WithInsecure(),
-	)
-	if err != nil {
-		helpers.LogMsg("Can`t connect to grpc")
-		return
-	}
-	defer grcpConn.Close()
-
-	AuthManager = models.NewAuthCheckerClient(grcpConn)
-	for _, player := range r.Players {
+	players := r.Players
+	for _, player := range players {
 		if player.Type == PENGUIN {
 			player.instance.Score = uint64(player.roomMulti.state.Penguin.Score)
 		}
@@ -274,7 +262,7 @@ func (r *RoomMulti) SaveResult() {
 			player.instance.Score = uint64(player.roomMulti.state.Gun.Score)
 		}
 		ctx := context.Background()
-		_, err := AuthManager.SaveUserGame(ctx, player.instance)
+		_, err := models.AuthManager.SaveUserGame(ctx, player.instance)
 		fmt.Println(err)
 	}
 }

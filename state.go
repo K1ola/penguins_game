@@ -2,6 +2,8 @@ package main
 
 import "time"
 
+const LastRound int = 2
+
 type GameMode string
 const (
 	SINGLE GameMode = "SINGLE"
@@ -22,6 +24,7 @@ const (
 	FINISHGAME ServerMessage = "SIGNAL_FINISH_GAME"
 	FINISHROUND ServerMessage = "SIGNAL_FINISH_ROUND"
 	STATE ServerMessage = "SIGNAL_NEW_GAME_STATE"
+	INITIALIZEDGAME ServerMessage = "SIGNAL_GAME_INITIALIZED"
 )
 
 type ClientRole string
