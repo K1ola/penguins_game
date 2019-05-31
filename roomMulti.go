@@ -33,7 +33,7 @@ func NewRoomMulti(MaxPlayers uint, id int) *RoomMulti {
 		Players:    make(map[string]*Player),
 		register:   make(chan *Player),
 		unregister: make(chan *Player),
-		ticker:     time.NewTicker(100 * time.Millisecond),
+		ticker:     time.NewTicker(50 * time.Millisecond),
  		state: &RoomState{
 			Penguin: new(PenguinState),
 			Gun: new(GunState),

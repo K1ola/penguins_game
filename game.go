@@ -205,7 +205,7 @@ func (g *Game) ProcessMulti(player *Player) {
 						Name: room.state.Gun.ID,
 						Score: uint(room.state.Gun.Score),
 					},
-					Round: uint(room.state.Round + 1),
+					Round: uint(room.state.Round),
 					PiscesCount: 24,
 				}})
 			//room.StartNewRound()
