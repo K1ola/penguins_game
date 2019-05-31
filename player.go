@@ -88,8 +88,8 @@ func (p *Player) Listen() {
 								}}
 						}
 						p.roomMulti.SendRoomState(message)
+						p.roomMulti.SaveResult()
 					}
-					p.roomMulti.SaveResult()
 					for _, player := range p.roomMulti.Players {
 						player.RemovePlayerFromRoom()
 						player.RemovePlayerFromGame()

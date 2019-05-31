@@ -2,7 +2,7 @@ package main
 
 import "time"
 
-const LastRound int = 2
+const LastRound int = 3
 
 type GameMode string
 const (
