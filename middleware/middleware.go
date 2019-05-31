@@ -21,7 +21,7 @@ func CORSMiddleware(next http.Handler) http.Handler {
 		responseHeader.Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 		responseHeader.Set("Access-Control-Allow-Credentials", "true")
 		responseHeader.Set("Access-Control-Allow-Headers", "Content-Type")
-		responseHeader.Set("Access-Control-Allow-Origin", "http://localhost:3001")
+		responseHeader.Set("Access-Control-Allow-Origin", "http://localhost")
 
 		if r.Method == "OPTIONS" {
 			return

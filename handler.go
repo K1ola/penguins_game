@@ -9,7 +9,6 @@ import (
 
 )
 
-var AuthManager models.AuthCheckerClient
 var user *models.User
 
 
@@ -21,11 +20,6 @@ func StartSingle(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Too many clients"))
 		return
 	}
-
-	//user = new(models.User)
-
-	//ctx := context.Background()
-	//user, _ = models.AuthManager.Get(ctx, &models.JWT{Token: cookie.Value})
 
 	upgrader := &websocket.Upgrader{}
 
@@ -39,9 +33,7 @@ func StartSingle(w http.ResponseWriter, r *http.Request) {
 
 	helpers.LogMsg("Connected to client")
 
-	//TODO remove hardcore, get from front player value
 	player := NewPlayer(conn)
-	//player.ID = user.Login
 	go player.Listen()
 }
 

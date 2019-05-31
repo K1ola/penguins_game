@@ -25,7 +25,7 @@ type Player struct {
 	Playing bool
 }
 var counter int
-var currentPlayer string
+
 func NewPlayer(conn *websocket.Conn) *Player {
 	return &Player{
 		instance: new(models.User),
@@ -88,6 +88,7 @@ func (p *Player) Listen() {
 								}}
 						}
 						p.roomMulti.SendRoomState(message)
+						p.roomMulti.SaveResult()
 					}
 					for _, player := range p.roomMulti.Players {
 						player.RemovePlayerFromRoom()
@@ -114,6 +115,7 @@ func (p *Player) Listen() {
 							Round: uint(p.roomSingle.state.Round),
 						}}
 					p.roomSingle.SendRoomState(message)
+					p.roomSingle.SaveResult()
 					p.RemovePlayerFromRoom()
 					p.RemovePlayerFromGame()
 				}
@@ -121,7 +123,6 @@ func (p *Player) Listen() {
 				helpers.LogMsg("Player " + p.ID +" disconnected")
 				metrics.PlayersCountInGame.Dec()
 				return
-			//}
 			}
 			if err != nil {
 				log.Printf("Cannot read json")
@@ -171,10 +172,8 @@ func (p *Player) Listen() {
 						p.roomSingle.StartNewRound()
 					case MULTI:
 						if p.roomMulti.gameState == WAITING  {
-							fmt.Println(p.roomMulti)
 							p.roomMulti.SendRoomState(&OutcomeMessage{Type: WAIT})
 							p.roomMulti.gameState = INITIALIZED
-							//currentPlayer = p.ID
 							continue
 						}
 						p.roomMulti.StartNewRound()
