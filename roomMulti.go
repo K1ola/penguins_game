@@ -102,7 +102,9 @@ func (r *RoomMulti) AddPlayer(player *Player) {
 
 func (r *RoomMulti) RemovePlayer(player *Player) {
 	//r.unregister <- player
+	r.mu.Lock()
 	delete(r.Players, player.ID)
+	r.mu.Unlock()
 	helpers.LogMsg("Player " + player.ID + " was removed from room")
 }
 
