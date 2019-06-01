@@ -98,23 +98,23 @@ func (p *Player) Listen() {
 
 				if p.roomSingle != nil {
 					p.roomSingle.gameState = FINISHED
-					message := new(OutcomeMessage)
-					message = &OutcomeMessage{
-						Type: FINISHGAME,
-						Payload: OutPayloadMessage{
-							Penguin: PenguinMessage{
-								Name:   p.roomSingle.state.Penguin.ID,
-								Score:  uint(p.roomSingle.state.Penguin.Score),
-								Result: LOST,
-							},
-							Gun: GunMessage{
-								Name:   string(GUN),
-								Score:  uint(p.roomSingle.state.Gun.Score),
-								Result: WIN,
-							},
-							Round: uint(p.roomSingle.state.Round),
-						}}
-					p.roomSingle.SendRoomState(message)
+					//message := new(OutcomeMessage)
+					//message = &OutcomeMessage{
+					//	Type: FINISHGAME,
+					//	Payload: OutPayloadMessage{
+					//		Penguin: PenguinMessage{
+					//			Name:   p.roomSingle.state.Penguin.ID,
+					//			Score:  uint(p.roomSingle.state.Penguin.Score),
+					//			Result: LOST,
+					//		},
+					//		Gun: GunMessage{
+					//			Name:   string(GUN),
+					//			Score:  uint(p.roomSingle.state.Gun.Score),
+					//			Result: WIN,
+					//		},
+					//		Round: uint(p.roomSingle.state.Round),
+					//	}}
+					//p.roomSingle.SendRoomState(message)
 					p.roomSingle.SaveResult()
 					p.RemovePlayerFromRoom()
 					p.RemovePlayerFromGame()

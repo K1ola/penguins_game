@@ -63,6 +63,7 @@ func RunSingle(room *RoomSingle) *OutcomeMessage {
 		room.FinishRound()
 		return msg
 	}
+	go room.state.RecalcGun()
 	room.state.RecalcGun()
 	msg = room.state.RecalcBullet()
 	if msg != nil {
@@ -205,7 +206,7 @@ func (rs *RoomState) RecalcBullet() *OutcomeMessage{
 
 		rs.Gun.Bullet.DistanceFromCenter = 0
 	}
-	rs.Gun.Bullet.DistanceFromCenter += 3
+	rs.Gun.Bullet.DistanceFromCenter += 2
 	return nil
 }
 

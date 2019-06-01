@@ -3,6 +3,8 @@ package main
 import "time"
 
 const LastRound int = 3
+var SingleGameSpeed = 50
+var Delta = 50
 
 type GameMode string
 const (

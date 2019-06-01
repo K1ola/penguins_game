@@ -226,4 +226,6 @@ func (g *Game) ProcessMulti(player *Player) {
 	player.out <- &OutcomeMessage{Type: WAIT}
 	g.mu.Unlock()
 	room.gameState = PICKINGUP
+	room.state.Round = 1
+	room.round = 1
 }
