@@ -24,7 +24,7 @@ func setConfig() (string, int, string) {
 	var maxRooms int
 	if err := viper.ReadInConfig(); err != nil {
 		port = ":8085"
-		maxRooms = 10
+		maxRooms = 20
 		authAddress = "127.0.0.1:8083"
 	} else {
 		port = ":" + viper.GetString("port")

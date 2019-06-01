@@ -14,8 +14,8 @@ func TestConfig(t *testing.T) {
 }
 
 func TestGame(t *testing.T) {
-	InitGame(10)
-	game := NewGame(10)
+	InitGame(20)
+	game := NewGame(20)
 	game.RoomsCount()
 	var conn *websocket.Conn
 	player := NewPlayer(conn)

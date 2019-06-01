@@ -142,6 +142,7 @@ func (r *RoomSingle) SaveResult() {
 	fmt.Println(r.Player.Type)
 	ctx := context.Background()
 	_, err := models.AuthManager.SaveUserGame(ctx, r.Player.instance)
+	_, err = models.AuthManager.DeleteUserFromGame(ctx, r.Player.instance)
 	fmt.Println(err)
 }
 

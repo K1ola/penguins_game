@@ -263,6 +263,7 @@ func (r *RoomMulti) SaveResult() {
 		}
 		ctx := context.Background()
 		_, err := models.AuthManager.SaveUserGame(ctx, player.instance)
+		_, err = models.AuthManager.DeleteUserFromGame(ctx, player.instance)
 		fmt.Println(err)
 	}
 }
