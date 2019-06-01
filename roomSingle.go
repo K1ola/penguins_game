@@ -33,7 +33,7 @@ func NewRoomSingle(MaxPlayers uint, id int) *RoomSingle {
 		Player:    new(Player),
 		register:   make(chan *Player),
 		unregister: make(chan *Player),
-		ticker:     time.NewTicker(50 * time.Millisecond),
+		ticker:     time.NewTicker(time.Duration(SingleGameSpeed) * time.Millisecond),
 		state: &RoomState{
 			Penguin: new(PenguinState),
 			Gun: new(GunState),
@@ -116,7 +116,7 @@ func (r *RoomSingle) FinishGame() {
 }
 
 func (r *RoomSingle) StartNewRound() {
-	//time.Sleep(500 * time.Millisecond)
+	//time.Sleep(50 * time.Millisecond)
 		message := &OutcomeMessage{
 			Type: START,
 			Payload: OutPayloadMessage{
@@ -136,6 +136,7 @@ func (r *RoomSingle) StartNewRound() {
 		r.state = CreateInitialStateSingle(r)
 		r.gameState = RUNNING
 }
+
 
 func (r *RoomSingle) SaveResult() {
 	r.Player.instance.Score = uint64(r.Player.roomSingle.state.Penguin.Score)

@@ -77,6 +77,8 @@ func (r *RoomMulti) Run() {
 					r.SaveResult()
 					message := r.FinishGame()
 					r.SendRoomState(message)
+					r.state.Round = 1
+					r.round = 1
 					return
 				} else {
 					r.SendRoomState(message)
@@ -102,7 +104,9 @@ func (r *RoomMulti) AddPlayer(player *Player) {
 
 func (r *RoomMulti) RemovePlayer(player *Player) {
 	//r.unregister <- player
+	r.mu.Lock()
 	delete(r.Players, player.ID)
+	r.mu.Unlock()
 	helpers.LogMsg("Player " + player.ID + " was removed from room")
 }
 
