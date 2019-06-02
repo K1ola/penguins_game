@@ -77,6 +77,8 @@ func (r *RoomMulti) Run() {
 					r.SaveResult()
 					message := r.FinishGame()
 					r.SendRoomState(message)
+					r.state.Round = 1
+					r.round = 1
 					return
 				} else {
 					r.SendRoomState(message)
@@ -265,6 +267,7 @@ func (r *RoomMulti) SaveResult() {
 		}
 		ctx := context.Background()
 		_, err := models.AuthManager.SaveUserGame(ctx, player.instance)
+		_, err = models.AuthManager.DeleteUserFromGame(ctx, player.instance)
 		fmt.Println(err)
 	}
 }

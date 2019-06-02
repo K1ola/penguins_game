@@ -13,7 +13,7 @@ var user *models.User
 
 
 func StartSingle(w http.ResponseWriter, r *http.Request) {
-	if PingGame.RoomsCount() >= 10 {
+	if PingGame.RoomsCount() >= 20 {
 		//TODO check response on the client side
 		helpers.LogMsg("Too many clients")
 		w.WriteHeader(http.StatusTooManyRequests)
@@ -38,7 +38,7 @@ func StartSingle(w http.ResponseWriter, r *http.Request) {
 }
 
 func StartMulti(w http.ResponseWriter, r *http.Request) {
-	if PingGame.RoomsCount() >= 10 {
+	if PingGame.RoomsCount() >= 20 {
 		//TODO check response on the client side
 		helpers.LogMsg("Too many clients")
 		w.WriteHeader(http.StatusTooManyRequests)
